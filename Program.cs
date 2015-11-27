@@ -45,19 +45,14 @@ namespace checkAppVersion
 			Unknown=3
 		}
 		
-//		static string[] cmdArgs;
 		static Dictionary<string, string> dicApplications;
 		static Dictionary<string, string> dicCmdArgs;
+		static int status = (int) nagiosStatus.Ok;
 		
-//		static bool bProcess;
-//		static bool b;
-		
-//		Process prz;
-		
-		static int status =(int) nagiosStatus.Ok;
-		
-//		static string[] ver;
-		
+        /// <summary>
+        /// Optionen für den Vergleich der angegebenen Version und der aus
+        /// dem Prozess ermittelten Versions Angabe
+        /// </summary>
 		[Flags()]
 		public enum cmdActionArgsCompareType : int
 		{
@@ -78,7 +73,11 @@ namespace checkAppVersion
 			set { _compareType = value; }
 		}
 		
-
+        /// <summary>
+        /// Main Funktion der Anwendung
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
     	public static int Main(string[] args)
 		{
 			string tmp = "";
@@ -110,6 +109,10 @@ namespace checkAppVersion
 			return status;
 		}
     	
+        /// <summary>
+        /// Prüfen und ermitteln welche Parameter der Anwendung übergeben wurden
+        /// Parameter werden in einem Dictionary gespeichert
+        /// </summary>
     	static void check_cmdLineArgs()
     	{
 	        //	Kommandozeilenparameter Auflistung
@@ -127,34 +130,45 @@ namespace checkAppVersion
 			string cmdProcess;
 			string cmdCompareType;
 
-			if (Environment.GetCommandLineArgs().Length > 0) 
-			{
-	        	cmdNeedVer = ParseCmdLineParam("version", Environment.CommandLine);
-	        	cmdProcess = ParseCmdLineParam("process", Environment.CommandLine);
-	        	cmdCompareType = ParseCmdLineParam("compare", Environment.CommandLine);
-	        	
-	        	if (!string.IsNullOrWhiteSpace(cmdNeedVer)) {
-	        		dicCmdArgs.Add("version", cmdNeedVer);
-	        	}
-	        	else
-	        		dicCmdArgs.Add("version", "1.0");
-	        	
-	        	if (!string.IsNullOrWhiteSpace(cmdProcess)) {
-	        		dicCmdArgs.Add("process", cmdProcess);
-	        	}
-	        	else
-	        		dicCmdArgs.Add("process", "JM4");
+            if (Environment.GetCommandLineArgs().Length > 0)
+            {
+                cmdNeedVer = ParseCmdLineParam("version", Environment.CommandLine);
+                cmdProcess = ParseCmdLineParam("process", Environment.CommandLine);
+                cmdCompareType = ParseCmdLineParam("compare", Environment.CommandLine);
 
-	        	if (!string.IsNullOrWhiteSpace(cmdCompareType)) {
-	        		dicCmdArgs.Add("compare", cmdCompareType);
-	        	}
-	        	else
-	        		dicCmdArgs.Add("compare", string.IsNullOrWhiteSpace(cmdNeedVer) ? string.Empty : "TEXT");
-	        }
+                if (!string.IsNullOrWhiteSpace(cmdNeedVer))
+                {
+                    dicCmdArgs.Add("version", cmdNeedVer);
+                }
+                else
+                    dicCmdArgs.Add("version", "1.0");
+
+                if (!string.IsNullOrWhiteSpace(cmdProcess))
+                {
+                    dicCmdArgs.Add("process", cmdProcess);
+                }
+                else
+                    dicCmdArgs.Add("process", "JM4");
+
+                if (!string.IsNullOrWhiteSpace(cmdCompareType))
+                {
+                    dicCmdArgs.Add("compare", cmdCompareType);
+                }
+                else
+                    dicCmdArgs.Add("compare", string.IsNullOrWhiteSpace(cmdNeedVer) ? string.Empty : "TEXT");
+            }
+            else
+                //  Ausgabe der Hinweise zum Aufruf
+                //  Und Nutzung der Parameter
+                printUsage();
 	        //	####
     	}
     	
-    	
+    	/// <summary>
+        /// Prüfen auf gültige compare Parameter
+        /// Vergleich mit enum
+        /// </summary>
+        /// <param name="value"></param>
     	static void check_compareParameters(string value)
     	{
         //	Übergebenen Action Parameter prüfen ob dieser im enum enthalten ist
@@ -176,6 +190,14 @@ namespace checkAppVersion
         //	####
     	}
     	
+        /// <summary>
+        /// Prüfen ob der angegebene Prozess aktiv ist
+        /// Es wird der erste gefundene Prozess genutzt
+        /// Ermitteln der Version
+        /// Vergleichen der Version
+        /// </summary>
+        /// <param name="strProcess">Name des zu prüfenden Prozess</param>
+        /// <returns></returns>
     	static bool check_ProcessIsRunning(string strProcess)
     	{
     		//prz = new System.Diagnostics.Process();
@@ -184,10 +206,9 @@ namespace checkAppVersion
     		
     		string strVersion = "";
     		string strVerNeed = "";
-//    		int[] iVerInf;
     		
-    		if (appProzess.Length > 0) {
-//    			iVerInf = new int[4];
+    		if (appProzess.Length > 0)
+            {
     			Debug.WriteLine(appProzess[0].MainModule.FileName, "check_ProcessIsRunning() -> FileName");
     			Console.WriteLine("{0}", appProzess[0].MainModule.FileName);
     			Debug.WriteLine(appProzess[0].MainModule.FileVersionInfo.ToString(), "check_ProcessIsRunning() -> FileVersionInfo");
@@ -198,17 +219,10 @@ namespace checkAppVersion
     			strVersion = string.Format("{0}.{1}.{2}.{3}", fvi.FileMajorPart, fvi.FileMinorPart, fvi.FileBuildPart, fvi.FilePrivatePart);
     			dicCmdArgs.TryGetValue("version", out strVerNeed);
     			
-//    			iVerInf.SetValue(fvi.FileMajorPart, 0);
-//    			iVerInf.SetValue(fvi.FileMinorPart, 1);
-//    			iVerInf.SetValue(fvi.FileBuildPart, 2);
-//    			iVerInf.SetValue(fvi.FilePrivatePart, 3);
-    			
-//    			if(check_VersionNumbers(iVerInf))
 				if(check_VersionNumbers(new int[]{fvi.FileMajorPart, fvi.FileMinorPart, fvi.FileBuildPart, fvi.FilePrivatePart}, strVersion2IntArray(strVerNeed)))
     				Debug.WriteLine(string.Format("Version ist OK (Erf. {0}/ App {1})", strVerNeed, strVersion));
     			else
     				Debug.WriteLine(string.Format("Version ist NOK (Erf. {0}/ App {1})", strVerNeed, strVersion));
-//    				= string.Format("{0}.{1}.{2}.{3}", fvi.FileMajorPart, fvi.FileMinorPart, fvi.FilePrivatePart, fvi.FileBuildPart);
     			
     			return true;
     		}
@@ -216,6 +230,12 @@ namespace checkAppVersion
     		return false;
     	}
     	
+        /// <summary>
+        /// Vergleich der Versionsnummer als Text vergleich
+        /// </summary>
+        /// <param name="strVerNum"></param>
+        /// <param name="strVerNeed"></param>
+        /// <returns>True, wenn Identisch. Sonst False</returns>
     	static bool check_VersionNumbers(string strVerNum, string strVerNeed)
     	{
     		if (!string.IsNullOrWhiteSpace(strVerNum) && !string.IsNullOrWhiteSpace(strVerNeed)) {
@@ -229,6 +249,12 @@ namespace checkAppVersion
     		return true;
     	}
     	
+        /// <summary>
+        /// Vergleich der Versionsteile als nummericher Wert
+        /// </summary>
+        /// <param name="iVerNum">Array für ermittelte Version</param>
+        /// <param name="iVerNeed">Array der zu prüfenden Version</param>
+        /// <returns>True, wenn Identisch. Sonst False</returns>
     	static bool check_VersionNumbers(int[] iVerNum, int[] iVerNeed)
     	{
     		//TODO: CompareType mit einbeziehen
@@ -243,6 +269,11 @@ namespace checkAppVersion
     		return false;
     	}
     	
+        /// <summary>
+        /// Wandelt die übergebene Versionsnummer in ein nummerisches Array
+        /// </summary>
+        /// <param name="Version">String mit Versionsnummer </param>
+        /// <returns>Nummerisches Array</returns>
     	static int[] strVersion2IntArray(string Version)
     	{
     		string[] verarr = Version.Split('.');
@@ -321,9 +352,12 @@ namespace checkAppVersion
 			return res;
 		}
 
+        /// <summary>
+        /// Ausgabe der Nutzungshinweise
+        /// </summary>
         static void printUsage()
         {
-
+            Console.WriteLine("Falsche/r oder fehlende/r Parameter angabe");
         }
 	}
 }
