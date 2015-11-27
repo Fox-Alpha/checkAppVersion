@@ -228,11 +228,11 @@ namespace checkAppVersion
                     equal = check_VersionNumbers(new int[] { fvi.FileMajorPart, fvi.FileMinorPart, fvi.FileBuildPart, fvi.FilePrivatePart }, strVersion2IntArray(strVerNeed));
 
                 if (equal)
-    				Debug.WriteLine(string.Format("Version ist OK (Erf. {0}/ App {1})", strVerNeed, strVersion));
+    				Debug.WriteLine(string.Format("Version ist OK (Erf. {0} ({2}) / App {1})", strVerNeed, strVersion, compareType));
     			else
-    				Debug.WriteLine(string.Format("Version ist NOK (Erf. {0}/ App {1})", strVerNeed, strVersion));
+    				Debug.WriteLine(string.Format("Version ist NOK (Erf. {0} ({2}) / App {1})", strVerNeed, strVersion, compareType));
     			
-    			return true;
+    			return equal;
     		}
 
     		return false;
@@ -265,59 +265,57 @@ namespace checkAppVersion
         /// <returns>True, wenn Identisch. Sonst False</returns>
     	static bool check_VersionNumbers(int[] iVerNum, int[] iVerNeed)
     	{
-    		//  CompareType mit einbeziehen
+            //  CompareType mit einbeziehen
             //  Nur Vergleichen wenn beide Versionen gleiche Anzahl Teile haben
-    		if (iVerNum.Length == iVerNeed.Length)
+            if (iVerNum.Length >= iVerNeed.Length)
             {
                 //  Alle Teile vergleichen
-                if ((compareType & cmdActionArgsCompareType.ALL) != 0)
+                for (int i = 0; i < iVerNeed.Length; i++)
                 {
-                    for (int i = 0; i < iVerNeed.Length; i++)
+                    if (((compareType & cmdActionArgsCompareType.Major) != 0) && i == 0)
                     {
                         if (iVerNeed[i] != iVerNum[i])
                         {
-                            //  Wenn ein Teil != dann Abruch
+                            return false;
+                        }
+                        continue;
+                    }
+                    if (((compareType & cmdActionArgsCompareType.Minor) != 0) && i == 1)
+                    {
+                        if (iVerNeed[i] != iVerNum[i])
+                        {
+                            return false;
+                        }
+                        continue;
+                    }
+                    if (((compareType & cmdActionArgsCompareType.Build) != 0) && i == 2)
+                    {
+                        if (iVerNeed[i] != iVerNum[i])
+                        {
+                            return false;
+                        }
+                        continue;
+                    }
+                    if (((compareType & cmdActionArgsCompareType.Private) != 0) && i == 3)
+                    {
+                        if (iVerNeed[i] != iVerNum[i])
+                        {
+                            return false;
+                        }
+                        continue;
+                    }
+                    if (i > 3 && (compareType & cmdActionArgsCompareType.ALL) != 0)
+                    {
+                        if (iVerNeed[i] != iVerNum[i])
+                        {
                             return false;
                         }
                     }
-                    return true;
+                    else
+                        break;
                 }
-                //  4-Teilig. Alle Teile einzelnd vergleichen
-                //  Abruch wenn ein Teil != ist
-                else if (iVerNum.Length == 4 && iVerNeed.Length == 4)
-                {
-                    if ((compareType & cmdActionArgsCompareType.Major) != 0)
-                    {
-                        if (iVerNeed[0] != iVerNum[0])
-                        {
-                            return false;
-                        }
-                    }
-                    if ((compareType & cmdActionArgsCompareType.Minor) != 0)
-                    {
-                        if (iVerNeed[1] != iVerNum[1])
-                        {
-                            return false;
-                        }
-                    }
-                    if ((compareType & cmdActionArgsCompareType.Build) != 0)
-                    {
-                        if (iVerNeed[2] != iVerNum[2])
-                        {
-                            return false;
-                        }
-                    }
-                    if ((compareType & cmdActionArgsCompareType.Private) != 0)
-                    {
-                        if (iVerNeed[3] != iVerNum[3])
-                        {
-                            return false;
-                        }
-                    }
-                    return true;
-                }
+                return true;
             }
-    		
     		return false;
     	}
     	
@@ -334,9 +332,9 @@ namespace checkAppVersion
     		
     		if(verarr.Length > 0)
     		{
-    			for(int i=0; i<verarr.Length-1;i++)
+    			for(int i=0; i<verarr.Length;i++)
     			{
-    				if(!int.TryParse(verarr[i], out iTmp))
+    				if(int.TryParse(verarr[i], out iTmp))
     					iver.SetValue(iTmp, i);
     			}
     		}
