@@ -178,7 +178,7 @@ namespace checkAppVersion
 	        {
         		if (!string.IsNullOrWhiteSpace(value) && value.ToLower() == enumarg.ToLower()) {
         			Debug.WriteLine("{0} = {1}",enumarg, value);
-        			Enum.TryParse<cmdActionArgsCompareType>(value, out result);
+        			Enum.TryParse<cmdActionArgsCompareType>(enumarg, out result);
         			if (compareType == cmdActionArgsCompareType.NONE) {
         				compareType = result;
         			}
