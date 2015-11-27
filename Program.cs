@@ -206,6 +206,7 @@ namespace checkAppVersion
     		
     		string strVersion = "";
     		string strVerNeed = "";
+            bool equal = false;
     		
     		if (appProzess.Length > 0)
             {
@@ -218,8 +219,15 @@ namespace checkAppVersion
     			
     			strVersion = string.Format("{0}.{1}.{2}.{3}", fvi.FileMajorPart, fvi.FileMinorPart, fvi.FileBuildPart, fvi.FilePrivatePart);
     			dicCmdArgs.TryGetValue("version", out strVerNeed);
-    			
-				if(check_VersionNumbers(new int[]{fvi.FileMajorPart, fvi.FileMinorPart, fvi.FileBuildPart, fvi.FilePrivatePart}, strVersion2IntArray(strVerNeed)))
+
+                if ((compareType & cmdActionArgsCompareType.TEXT) != 0)
+                {
+                    equal = check_VersionNumbers(strVersion, strVerNeed);
+                }
+                else
+                    equal = check_VersionNumbers(new int[] { fvi.FileMajorPart, fvi.FileMinorPart, fvi.FileBuildPart, fvi.FilePrivatePart }, strVersion2IntArray(strVerNeed));
+
+                if (equal)
     				Debug.WriteLine(string.Format("Version ist OK (Erf. {0}/ App {1})", strVerNeed, strVersion));
     			else
     				Debug.WriteLine(string.Format("Version ist NOK (Erf. {0}/ App {1})", strVerNeed, strVersion));
@@ -257,14 +265,58 @@ namespace checkAppVersion
         /// <returns>True, wenn Identisch. Sonst False</returns>
     	static bool check_VersionNumbers(int[] iVerNum, int[] iVerNeed)
     	{
-    		//TODO: CompareType mit einbeziehen
-    		if (iVerNum.Length == iVerNeed.Length) {
-    			for(int i=0;i<iVerNeed.Length;i++)
-    			{
-    				
-    			}
-    		}
-    		
+    		//  CompareType mit einbeziehen
+            //  Nur Vergleichen wenn beide Versionen gleiche Anzahl Teile haben
+    		if (iVerNum.Length == iVerNeed.Length)
+            {
+                //  Alle Teile vergleichen
+                if ((compareType & cmdActionArgsCompareType.ALL) != 0)
+                {
+                    for (int i = 0; i < iVerNeed.Length; i++)
+                    {
+                        if (iVerNeed[i] != iVerNum[i])
+                        {
+                            //  Wenn ein Teil != dann Abruch
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+                //  4-Teilig. Alle Teile einzelnd vergleichen
+                //  Abruch wenn ein Teil != ist
+                else if (iVerNum.Length == 4 && iVerNeed.Length == 4)
+                {
+                    if ((compareType & cmdActionArgsCompareType.Major) != 0)
+                    {
+                        if (iVerNeed[0] != iVerNum[0])
+                        {
+                            return false;
+                        }
+                    }
+                    if ((compareType & cmdActionArgsCompareType.Minor) != 0)
+                    {
+                        if (iVerNeed[1] != iVerNum[1])
+                        {
+                            return false;
+                        }
+                    }
+                    if ((compareType & cmdActionArgsCompareType.Build) != 0)
+                    {
+                        if (iVerNeed[2] != iVerNum[2])
+                        {
+                            return false;
+                        }
+                    }
+                    if ((compareType & cmdActionArgsCompareType.Private) != 0)
+                    {
+                        if (iVerNeed[3] != iVerNum[3])
+                        {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+            }
     		
     		return false;
     	}
@@ -311,13 +363,22 @@ namespace checkAppVersion
 				
 				//	Ersetzem von Anführungszeichen in der Parameterliste
 				cmdline = Regex.Replace(cmdline, "\"", "");
-				
-				//Wenn Key nicht gefunden wurde, dann beenden.
-				if((start = cmdline.ToLower().IndexOf(key)) <= 0)
-					return "";
+
+                //  Start auf ersten Parameter beginnend mit ' -' setzen
+                if (cmdline.IndexOf(" -", start) > 0)
+                {
+                    start = cmdline.IndexOf(" -", start);
+                    cmdline = cmdline.Substring(start, cmdline.Length - start);
+                }
+                else
+                    return string.Empty;
+
+                //Wenn Key nicht gefunden wurde, dann beenden.
+                if ((start = cmdline.ToLower().IndexOf(key)) <= 0)
+					return string.Empty;
 				
 				if (cmdline.Length == start+key.Length)
-					return cmdline.Substring(start, cmdline.Length-start);;
+					return cmdline.Substring(start, cmdline.Length-start);
 				
 				//prüfen ob dem Parameter ein Wert mit '=' angehängt ist
 				if (cmdline[start+key.Length] == '=') {
