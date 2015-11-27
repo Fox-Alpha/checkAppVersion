@@ -13,6 +13,25 @@ using System.Text.RegularExpressions;
 using System.Collections;
 using System.Collections.Generic;
 
+
+//--------------------- TODO ---------------------
+//
+//  Ausgabe einer Hilfe, wenn falsche oder fehlende 
+//  Parameter angegeben wurden
+//
+//  Prüfen ob mindesten Parameter 'process' vorhanden ist
+//  Wenn nicht, Hilfe und Benutzungshinweise ausgeben
+//
+//  Prüfen ob Parameter 'version' angegeben wurde.
+//  - Wenn keine Version, dann Ausgabe der Version des Prozesses. 
+//      Rückgabe für Nagios: OK
+//
+//  Prüfen ob der 'compare' Paremeter richtig verwender wurde
+//  - Wenn nicht nummerische Zeichen in Version enthalten sind, 
+//      dann kann nur TEXT als Vergleich genutzt werden.
+//  - Wenn 'compare' verwendet wird. Muss !!! auch eine Version angegeben sein.
+//
+//--------------------- TODO ---------------------
 namespace checkAppVersion
 {
 	class Program
@@ -267,15 +286,15 @@ namespace checkAppVersion
     		
     		return iver;
     	}
-	
-	
-		/// <summary>
-		/// Auslesen der Parameter aus dem Kommandozeilen Aufruf
-		/// </summary>
-		/// <param name="key"></param>
-		/// <param name="cmdline"></param>
-		/// <returns></returns>
-		public static string ParseCmdLineParam(string key, string cmdline)
+
+
+        /// <summary>
+        /// Auslesen der Parameter aus dem Kommandozeilen Aufruf
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="cmdline"></param>
+        /// <returns></returns>
+        static public string ParseCmdLineParam(string key, string cmdline)
 		{
 			string res = "";
 			try
@@ -325,5 +344,10 @@ namespace checkAppVersion
 			}
 			return res;
 		}
+
+        static void printUsage()
+        {
+
+        }
 	}
 }
