@@ -103,31 +103,7 @@ namespace checkAppVersion
 					check_ProcessIsRunning(tmp);
 				}
 			}
-			
 
-//			if (args.Length > 0) {
-//				foreach(string s in args)
-//					Debug.WriteLine(s, "CommandLIne");
-//				
-//				cmdArgs = Environment.GetCommandLineArgs();
-//
-//				if (Environment.GetCommandLineArgs().Length > 0) {
-//					strProcName = ParseCmdLineParam("process", Environment.CommandLine);
-//					
-//					strVerNeed = ParseCmdLineParam("version", Environment.CommandLine);
-//					strCompareType = ParseCmdLineParam("compare", Environment.CommandLine);
-//					
-//					
-//					if (!string.IsNullOrEmpty(strProcName) && !string.IsNullOrEmpty(strVerNeed)) {
-//						ver = strVerNeed.Split('.');
-//						if(check_ProcessIsRunning(strProcName))
-//							Debug.WriteLine("Process gefunden");
-//						else
-//							Debug.WriteLine("Process {0} nicht gefunden", strProcName);
-//					}
-//				}
-//			}
-			
 			Console.Write("Press any key to continue . . . ");
 			Console.ReadKey(true);
 			
