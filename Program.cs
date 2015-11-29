@@ -174,13 +174,17 @@ namespace checkAppVersion
                             iVer = strVersion2IntArray(ver);
                             equal = check_VersionNumbers(iVer, strVersion2IntArray(ver));
                         }
+
+                        if (equal)
+                            Debug.WriteLine(string.Format("Version ist OK (Erf. {0} ({2}) / App {1})", ver, strVersion, compareType));
+                        else
+                            Debug.WriteLine(string.Format("Version ist NOK (Erf. {0} ({2}) / App {1})", ver, strVersion, compareType));
                     }
 
-                    if (equal)
-                        Debug.WriteLine(string.Format("Version ist OK (Erf. {0} ({2}) / App {1})", ver, strVersion, compareType));
-                    else
-                        Debug.WriteLine(string.Format("Version ist NOK (Erf. {0} ({2}) / App {1})", ver, strVersion, compareType));
-
+#if DEBUG
+                    Console.Write("Press any key to continue . . . ");
+                    Console.ReadKey(true);
+#endif
                     return equal ? (int)nagiosStatus.Ok : (int)nagiosStatus.Critical;
                 }
             }
@@ -278,7 +282,7 @@ namespace checkAppVersion
         		if (!string.IsNullOrWhiteSpace(value) && value.ToLower() == enumarg.ToLower())
                 {
         			Debug.WriteLine("{0} = {1}",enumarg, value);
-        			Enum.TryParse<cmdActionArgsCompareType>(enumarg, out result);
+        			Enum.TryParse(enumarg, out result);
         			if ((compareType & cmdActionArgsCompareType.NONE) != 0)  
                     {
         				compareType = result;
@@ -307,7 +311,7 @@ namespace checkAppVersion
                 if (!string.IsNullOrWhiteSpace(value) && value.ToLower() == enumarg.ToLower())
                 {
                     Debug.WriteLine("{0} = {1}", enumarg, value);
-                    Enum.TryParse<cmdActionArgsEqualType>(enumarg, out result);
+                    Enum.TryParse(enumarg, out result);
                     if (equalType == cmdActionArgsEqualType.NONE)
                     {
                         equalType = result;
@@ -316,7 +320,7 @@ namespace checkAppVersion
                         equalType = equalType | result;
                 }
             }
-            Debug.WriteLine("Action = {0}", compareType);
+            Debug.WriteLine("Equals = {0}", equalType);
         }
 
         /// <summary>
@@ -329,7 +333,6 @@ namespace checkAppVersion
         /// <returns></returns>
         static bool check_ProcessIsRunning(string strProcess, out string strVersion)
     	{
-    		//prz = new System.Diagnostics.Process();
     		Process [] appProzess = Process.GetProcessesByName(strProcess);
     		FileVersionInfo fvi;
     		
