@@ -27,7 +27,7 @@ using System.Collections.Generic;
 //      Rückgabe für Nagios: OK
 //
 //  Prüfen ob der 'compare' Paremeter richtig verwender wurde
-//  - Wenn nicht nummerische Zeichen in Version enthalten sind, 
+//  - Wenn 'nicht nummerische' Zeichen in Version enthalten sind, 
 //      dann kann nur TEXT als Vergleich genutzt werden.
 //  - Wenn 'compare' verwendet wird. Muss !!! auch eine Version angegeben sein.
 //
@@ -105,7 +105,7 @@ namespace checkAppVersion
         /// <returns></returns>
         public static int Main(string[] args)
 		{
-			string tmp = "";
+			string prz, ver, cmp = "";
 
 //			Console.WriteLine("Nagios Client - NSClient++ App");
 			Console.Title = "Nagios Client - NSClient++ App";
@@ -114,26 +114,85 @@ namespace checkAppVersion
             equalType = cmdActionArgsEqualType.NONE;
 
             check_cmdLineArgs();
-			
-			if (dicCmdArgs.TryGetValue("compare", out tmp)) {
-				if (!string.IsNullOrWhiteSpace(tmp)) {
-					foreach (string str in tmp.Split(',')) {
-	    				check_compareParameters(str);
-	    			}
-				}
-			}
-			
-			if (dicCmdArgs.TryGetValue("process", out tmp)) {
-				if (!string.IsNullOrWhiteSpace(tmp)) {
-					check_ProcessIsRunning(tmp);
-				}
-			}
 
-			Console.Write("Press any key to continue . . . ");
+            //  Es muss mindestens ein Prozessname angegeben sein
+            if (dicCmdArgs.TryGetValue("process", out prz))
+            {
+                //  Wenn eine Version angegeben ist, dann Vergleich durchführem
+                if (dicCmdArgs.TryGetValue("version", out ver))
+                {
+                    //  Für den Vergleich muss die Version mit angegeben sein
+                    if (dicCmdArgs.TryGetValue("compare", out cmp))
+                    {
+                        if (!string.IsNullOrWhiteSpace(cmp))
+                        {
+                            foreach (string str in cmp.Split(','))
+                            {
+                                if(!check_compareParameters(str))
+                                {
+                                    Console.WriteLine("Der angegebene vergleichs Parameter {0} ist ungültig", str);
+                                    printUsage();
+                                    return (int)nagiosStatus.Unknown;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+
+                    }
+                }
+
+                //  Wenn keine Version vorhanden ist, 
+                //  dann nur ausgabe der Version vom Prozes
+                if (!string.IsNullOrWhiteSpace(prz))
+                {
+                    string strVersion;
+                    //string strVerNeed;
+                    bool equal = false; ;
+                    int[] iVer;
+
+                    if (!check_ProcessIsRunning(prz, out strVersion))
+                    {
+                        Console.WriteLine("Es muss mindestens der Name eines Prozesses angegeben werden");
+                        printUsage();
+                        return (int)nagiosStatus.Unknown;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(ver))
+                    {
+                        if ((compareType & cmdActionArgsCompareType.TEXT) != 0)
+                        {
+                            equal = check_VersionNumbers(strVersion, ver);
+                        }
+                        else
+                        {
+                            iVer = strVersion2IntArray(ver);
+                            equal = check_VersionNumbers(iVer, strVersion2IntArray(ver));
+                        }
+                    }
+
+                    if (equal)
+                        Debug.WriteLine(string.Format("Version ist OK (Erf. {0} ({2}) / App {1})", ver, strVersion, compareType));
+                    else
+                        Debug.WriteLine(string.Format("Version ist NOK (Erf. {0} ({2}) / App {1})", ver, strVersion, compareType));
+
+                    return equal ? (int)nagiosStatus.Ok : (int)nagiosStatus.Critical;
+                }
+            }
+            else
+            {
+                Console.WriteLine("Es muss mindestens der Name eines Prozesses angegeben werden");
+                printUsage();
+            }
+
+#if DEBUG 
+            Console.Write("Press any key to continue . . . ");
 			Console.ReadKey(true);
-			
-			return status;
-		}
+#endif
+
+            return (int)nagiosStatus.Ok;
+        }
 
         #region check Funktions
         /// <summary>
@@ -205,17 +264,19 @@ namespace checkAppVersion
         /// Vergleich mit enum
         /// </summary>
         /// <param name="value"></param>
-    	static void check_compareParameters(string value)
+    	static bool check_compareParameters(string value)
     	{
         //	Übergebenen Action Parameter prüfen ob dieser im enum enthalten ist
 	        cmdActionArgsCompareType result;	
 	        
         	foreach (string enumarg in Enum.GetNames(typeof(cmdActionArgsCompareType)))
 	        {
-        		if (!string.IsNullOrWhiteSpace(value) && value.ToLower() == enumarg.ToLower()) {
+        		if (!string.IsNullOrWhiteSpace(value) && value.ToLower() == enumarg.ToLower())
+                {
         			Debug.WriteLine("{0} = {1}",enumarg, value);
         			Enum.TryParse<cmdActionArgsCompareType>(enumarg, out result);
-        			if (compareType == cmdActionArgsCompareType.NONE) {
+        			if ((compareType & cmdActionArgsCompareType.NONE) != 0)  
+                    {
         				compareType = result;
         			}
         			else
@@ -223,6 +284,8 @@ namespace checkAppVersion
         		} 
 	        }
         	Debug.WriteLine("Action = {0}", compareType);
+
+            return (compareType & cmdActionArgsCompareType.NONE) != 0 ? false : true;
         //	####
     	}
 
@@ -260,13 +323,12 @@ namespace checkAppVersion
         /// </summary>
         /// <param name="strProcess">Name des zu prüfenden Prozess</param>
         /// <returns></returns>
-        static bool check_ProcessIsRunning(string strProcess)
+        static bool check_ProcessIsRunning(string strProcess, out string strVersion)
     	{
     		//prz = new System.Diagnostics.Process();
     		Process [] appProzess = Process.GetProcessesByName(strProcess);
     		FileVersionInfo fvi;
     		
-    		string strVersion = "";
     		string strVerNeed = "";
             bool equal = false;
     		
@@ -280,22 +342,9 @@ namespace checkAppVersion
     			fvi = appProzess[0].MainModule.FileVersionInfo;
                 strVersion = string.Format("{0}.{1}.{2}.{3}", fvi.FileMajorPart, fvi.FileMinorPart, fvi.FileBuildPart, fvi.FilePrivatePart);
 
-                dicCmdArgs.TryGetValue("version", out strVerNeed);
-
-                if ((compareType & cmdActionArgsCompareType.TEXT) != 0)
-                {
-                    equal = check_VersionNumbers(strVersion, strVerNeed);
-                }
-                else
-                    equal = check_VersionNumbers(new int[] { fvi.FileMajorPart, fvi.FileMinorPart, fvi.FileBuildPart, fvi.FilePrivatePart }, strVersion2IntArray(strVerNeed));
-
-                if (equal)
-    				Debug.WriteLine(string.Format("Version ist OK (Erf. {0} ({2}) / App {1})", strVerNeed, strVersion, compareType));
-    			else
-    				Debug.WriteLine(string.Format("Version ist NOK (Erf. {0} ({2}) / App {1})", strVerNeed, strVersion, compareType));
-    			
-    			return equal;
+                return true;
     		}
+            strVersion = string.Empty;
 
     		return false;
     	}
