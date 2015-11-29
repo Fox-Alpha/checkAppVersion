@@ -154,8 +154,12 @@ namespace checkAppVersion
 
                     if (!check_ProcessIsRunning(prz, out strVersion))
                     {
-                        Console.WriteLine("Es muss mindestens der Name eines Prozesses angegeben werden");
+                        Console.WriteLine("Es muss mindestens der Name eines Prozesses angegeben werden oder der angegebene Prozess ist nicht gestartet");
                         printUsage();
+#if DEBUG
+                        Console.Write("Press any key to continue . . . ");
+                        Console.ReadKey(true);
+#endif
                         return (int)nagiosStatus.Unknown;
                     }
 
@@ -182,7 +186,7 @@ namespace checkAppVersion
             }
             else
             {
-                Console.WriteLine("Es muss mindestens der Name eines Prozesses angegeben werden");
+                Console.WriteLine("Es muss mindestens der Name eines Prozesses angegeben werden oder der angegebene Prozess ist nicht gestartet");
                 printUsage();
             }
 
@@ -229,14 +233,14 @@ namespace checkAppVersion
                     dicCmdArgs.Add("version", cmdNeedVer);
                 }
                 else
-                    dicCmdArgs.Add("version", "1.0");
+                    dicCmdArgs.Add("version", string.Empty);
 
                 if (!string.IsNullOrWhiteSpace(cmdProcess))
                 {
                     dicCmdArgs.Add("process", cmdProcess);
                 }
                 else
-                    dicCmdArgs.Add("process", "JM4");
+                    dicCmdArgs.Add("process", string.Empty);
 
                 if (!string.IsNullOrWhiteSpace(cmdCompareType))
                 {
@@ -328,9 +332,6 @@ namespace checkAppVersion
     		//prz = new System.Diagnostics.Process();
     		Process [] appProzess = Process.GetProcessesByName(strProcess);
     		FileVersionInfo fvi;
-    		
-    		string strVerNeed = "";
-            bool equal = false;
     		
     		if (appProzess.Length > 0)
             {
