@@ -65,22 +65,42 @@ namespace checkAppVersion
 			Build = 8,
 			Private = 16,
 			ALL = Major | Minor | Build | Private,
-			
 		}
+
+        public enum cmdActionArgsEqualType : int
+        {
+            NONE = 0,
+            EQ = 1,
+            GT,
+            LT,
+            NEQ,
+            GTE,
+            GTL
+        }
 		
 		static cmdActionArgsCompareType _compareType;
 		
-		static public cmdActionArgsCompareType compareType {
+		static public cmdActionArgsCompareType compareType
+        {
 			get { return _compareType; }
 			set { _compareType = value; }
 		}
-		
+
+        static cmdActionArgsEqualType _equalType;
+
+        static public cmdActionArgsEqualType equalType
+        {
+            get { return _equalType; }
+            set { _equalType = value; }
+        }
+
+
         /// <summary>
         /// Main Funktion der Anwendung
         /// </summary>
         /// <param name="args"></param>
         /// <returns></returns>
-    	public static int Main(string[] args)
+        public static int Main(string[] args)
 		{
 			string tmp = "";
 
@@ -88,8 +108,9 @@ namespace checkAppVersion
 			Console.Title = "Nagios Client - NSClient++ App";
 			
 			compareType = cmdActionArgsCompareType.NONE;
-			
-			check_cmdLineArgs();
+            equalType = cmdActionArgsEqualType.NONE;
+
+            check_cmdLineArgs();
 			
 			if (dicCmdArgs.TryGetValue("compare", out tmp)) {
 				if (!string.IsNullOrWhiteSpace(tmp)) {
@@ -131,12 +152,14 @@ namespace checkAppVersion
 			string cmdNeedVer;
 			string cmdProcess;
 			string cmdCompareType;
+            string cmdEquals;
 
             if (Environment.GetCommandLineArgs().Length > 0)
             {
                 cmdNeedVer = ParseCmdLineParam("version", Environment.CommandLine);
                 cmdProcess = ParseCmdLineParam("process", Environment.CommandLine);
                 cmdCompareType = ParseCmdLineParam("compare", Environment.CommandLine);
+                cmdEquals = ParseCmdLineParam("equals", Environment.CommandLine);
 
                 if (!string.IsNullOrWhiteSpace(cmdNeedVer))
                 {
@@ -158,6 +181,13 @@ namespace checkAppVersion
                 }
                 else
                     dicCmdArgs.Add("compare", string.IsNullOrWhiteSpace(cmdNeedVer) ? string.Empty : "TEXT");
+
+                if (!string.IsNullOrWhiteSpace(cmdCompareType))
+                {
+                    dicCmdArgs.Add("equals", cmdEquals);
+                }
+                else
+                    dicCmdArgs.Add("equals", string.IsNullOrWhiteSpace(cmdEquals) ? string.Empty : "eq");
             }
             else
                 //  Ausgabe der Hinweise zum Aufruf
@@ -191,7 +221,33 @@ namespace checkAppVersion
         	Debug.WriteLine("Action = {0}", compareType);
         //	####
     	}
-    	
+
+        /// <summary>
+        /// Prüft den Equals Parameter auf gültigkeit
+        /// </summary>
+        static void check_equalsParameters()
+        {
+            cmdActionArgsEqualType result;
+            string value = "";
+            dicCmdArgs.TryGetValue("equals", out value);
+
+            foreach (string enumarg in Enum.GetNames(typeof(cmdActionArgsEqualType)))
+            {
+                if (!string.IsNullOrWhiteSpace(value) && value.ToLower() == enumarg.ToLower())
+                {
+                    Debug.WriteLine("{0} = {1}", enumarg, value);
+                    Enum.TryParse<cmdActionArgsEqualType>(enumarg, out result);
+                    if (equalType == cmdActionArgsEqualType.NONE)
+                    {
+                        equalType = result;
+                    }
+                    else
+                        equalType = equalType | result;
+                }
+            }
+            Debug.WriteLine("Action = {0}", compareType);
+        }
+
         /// <summary>
         /// Prüfen ob der angegebene Prozess aktiv ist
         /// Es wird der erste gefundene Prozess genutzt
@@ -200,7 +256,7 @@ namespace checkAppVersion
         /// </summary>
         /// <param name="strProcess">Name des zu prüfenden Prozess</param>
         /// <returns></returns>
-    	static bool check_ProcessIsRunning(string strProcess)
+        static bool check_ProcessIsRunning(string strProcess)
     	{
     		//prz = new System.Diagnostics.Process();
     		Process [] appProzess = Process.GetProcessesByName(strProcess);
