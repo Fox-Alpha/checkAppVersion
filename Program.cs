@@ -38,8 +38,9 @@ namespace checkAppVersion
 {
 	class Program
 	{
-		//	Rückgabewerte für Nagios
-		enum nagiosStatus
+        #region Eigenschaften
+        //	Rückgabewerte für Nagios
+        enum nagiosStatus
 		{
 			Ok=0,
 			Warning=1,
@@ -94,6 +95,8 @@ namespace checkAppVersion
             set { _equalType = value; }
         }
 
+        #endregion
+
 
         /// <summary>
         /// Main Funktion der Anwendung
@@ -131,12 +134,13 @@ namespace checkAppVersion
 			
 			return status;
 		}
-    	
+
+        #region check Funktions
         /// <summary>
         /// Prüfen und ermitteln welche Parameter der Anwendung übergeben wurden
         /// Parameter werden in einem Dictionary gespeichert
         /// </summary>
-    	static void check_cmdLineArgs()
+        static void check_cmdLineArgs()
     	{
 	        //	Kommandozeilenparameter Auflistung
 	        //	Zwischenspeichern als Dictionary zum leichteren Zugriff
@@ -380,13 +384,16 @@ namespace checkAppVersion
             }
     		return false;
     	}
-    	
+
+        #endregion
+
+        #region helperFunktions
         /// <summary>
         /// Wandelt die übergebene Versionsnummer in ein nummerisches Array
         /// </summary>
         /// <param name="Version">String mit Versionsnummer </param>
         /// <returns>Nummerisches Array</returns>
-    	static int[] strVersion2IntArray(string Version)
+        static int[] strVersion2IntArray(string Version)
     	{
     		string[] verarr = Version.Split('.');
     		int[] iver = new int[4];
@@ -482,5 +489,7 @@ namespace checkAppVersion
         {
             Console.WriteLine("Falsche/r oder fehlende/r Parameter angabe");
         }
-	}
+
+        #endregion
+    }
 }
