@@ -139,7 +139,7 @@ namespace checkAppVersion
                     }
                     else
                     {
-
+                        //  Kein compare Parameter angegeben
                     }
                 }
 
@@ -160,10 +160,9 @@ namespace checkAppVersion
                         Console.Write("Press any key to continue . . . ");
                         Console.ReadKey(true);
 #endif
-                        return (int)nagiosStatus.Unknown;
+                        status = (int)nagiosStatus.Unknown;
                     }
-
-                    if (!string.IsNullOrWhiteSpace(ver))
+                    else if (!string.IsNullOrWhiteSpace(ver))
                     {
                         if ((compareType & cmdActionArgsCompareType.TEXT) != 0)
                         {
@@ -174,18 +173,21 @@ namespace checkAppVersion
                             iVer = strVersion2IntArray(ver);
                             equal = check_VersionNumbers(iVer, strVersion2IntArray(ver));
                         }
+                        status = equal ? (int)nagiosStatus.Ok : (int)nagiosStatus.Critical;
 
                         if (equal)
                             Debug.WriteLine(string.Format("Version ist OK (Erf. {0} ({2}) / App {1})", ver, strVersion, compareType));
                         else
                             Debug.WriteLine(string.Format("Version ist NOK (Erf. {0} ({2}) / App {1})", ver, strVersion, compareType));
+
+                        Console.WriteLine(string.Format("{4} Version ist {3}|(Erforderlich {0} ({2}) / Anwendung {1})", ver, strVersion, compareType, equal ? "OK" : "NOK", status));
                     }
 
 #if DEBUG
                     Console.Write("Press any key to continue . . . ");
                     Console.ReadKey(true);
 #endif
-                    return equal ? (int)nagiosStatus.Ok : (int)nagiosStatus.Critical;
+                    return status;
                 }
             }
             else
