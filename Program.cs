@@ -31,6 +31,8 @@ using System.Collections.Generic;
 //      dann kann nur TEXT als Vergleich genutzt werden.
 //  - Wenn 'compare' verwendet wird. Muss !!! auch eine Version angegeben sein.
 //
+//  Equals als Parameter implementieren
+//  - EQ, LT, GT, GTE, LTE, NEQ
 //--------------------- TODO ---------------------
 namespace checkAppVersion
 {
@@ -216,9 +218,9 @@ namespace checkAppVersion
     			Console.WriteLine("{0}", appProzess[0].MainModule.FileVersionInfo); //, "check_ProcessIsRunning() -> FileVersionInfo");
     			
     			fvi = appProzess[0].MainModule.FileVersionInfo;
-    			
-    			strVersion = string.Format("{0}.{1}.{2}.{3}", fvi.FileMajorPart, fvi.FileMinorPart, fvi.FileBuildPart, fvi.FilePrivatePart);
-    			dicCmdArgs.TryGetValue("version", out strVerNeed);
+                strVersion = string.Format("{0}.{1}.{2}.{3}", fvi.FileMajorPart, fvi.FileMinorPart, fvi.FileBuildPart, fvi.FilePrivatePart);
+
+                dicCmdArgs.TryGetValue("version", out strVerNeed);
 
                 if ((compareType & cmdActionArgsCompareType.TEXT) != 0)
                 {
@@ -265,6 +267,10 @@ namespace checkAppVersion
         /// <returns>True, wenn Identisch. Sonst False</returns>
     	static bool check_VersionNumbers(int[] iVerNum, int[] iVerNeed)
     	{
+            if (iVerNeed == null || iVerNum == null)
+            {
+                return false;
+            }
             //  CompareType mit einbeziehen
             //  Nur Vergleichen wenn beide Versionen gleiche Anzahl Teile haben
             if (iVerNum.Length >= iVerNeed.Length)
@@ -334,8 +340,10 @@ namespace checkAppVersion
     		{
     			for(int i=0; i<verarr.Length;i++)
     			{
-    				if(int.TryParse(verarr[i], out iTmp))
-    					iver.SetValue(iTmp, i);
+                    if (int.TryParse(verarr[i], out iTmp))
+                        iver.SetValue(iTmp, i);
+                    else
+                        return null;
     			}
     		}
     		else
