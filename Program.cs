@@ -184,11 +184,13 @@ namespace checkAppVersion
 	                        }
 	                        status = equal ? (int)nagiosStatus.Ok : (int)nagiosStatus.Critical;
 	
-	                        if (equal)
+#if DEBUG
+							if (equal)
 	                            Debug.WriteLine(string.Format("Version ist OK (Erf. {0} ({2}) / App {1})", ver, strVersion, compareType));
 	                        else
 	                            Debug.WriteLine(string.Format("Version ist NOK (Erf. {0} ({2}) / App {1})", ver, strVersion, compareType));
-	
+#endif
+
 	                        Console.WriteLine(string.Format("Version ist {3}|'(Erforderlich {0} ({2}) / Anwendung {1})'", ver, strVersion, compareType, equal ? "OK" : "NOK", status));
 	                    }
                     	else
