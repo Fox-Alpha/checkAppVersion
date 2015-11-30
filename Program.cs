@@ -172,8 +172,8 @@ namespace checkAppVersion
 	                        }
 	                        else
 	                        {
-	                            iVer = strVersion2IntArray(ver);
-	                            equal = check_VersionNumbers(iVer, strVersion2IntArray(ver));
+//	                            iVer = strVersion2IntArray(strVersion);
+	                            equal = check_VersionNumbers(strVersion2IntArray(strVersion), strVersion2IntArray(ver));
 	                        }
 	                        status = equal ? (int)nagiosStatus.Ok : (int)nagiosStatus.Critical;
 	
