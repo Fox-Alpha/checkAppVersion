@@ -34,7 +34,87 @@ Einbinden im Nagios
 Aufruf über check_nrpe
 Command: check_nrpe -n -H HH-ws-sd-003 -c alias_check_applicationversion -a '-process=JM4 -version=1.8.0.70 -compare=all'
 
+####
+#	Test zum Check JM4 / AM5 Versionen
+####
+define service{
+	name					generic-service-nscp-versionchk
+	service_description		Anwendungs Versionsabgleich
+	display_name			Anwendungs Versionsabgleich
+	is_volatile				0
+	max_check_attempts		5
+	normal_check_interval	1
+	retry_check_interval	1
+	active_checks_enabled	1
+	passive_checks_enabled	0
+	check_period			24x7
+	notification_interval	0
+	notification_period		workhours
+	notification_options	u,c,r
+	notifications_enabled	1
+	# contact_groups			ServiceDesk
+	register				0
+}
 
+define hostgroup{
+	hostgroup_name			hstgrp_test_versionchk_jm4
+	alias					Nagios-TestHosts-VersionChk-JM4
+	notes					Testgruppe fuer Anwendungs Versionsabgleich
+	members					HH-WS-SD-003,,HH-VS-JM-003,HH-VS-JM-004,HH-VS-JM-005,HH-VS-JM-007,HH-VS-JM-008
+}
+define hostgroup{
+	hostgroup_name			hstgrp_test_versionchk_am5
+	alias					Nagios-TestHosts-VersionChk-AM5
+	notes					Testgruppe fuer Anwendungs Versionsabgleich
+	members					HH-WS-SD-003,HH-VS-JM-001,HH-VS-JM-002,HH-VS-JM-004,HH-VS-JM-006
+}
+define servicegroup{
+	servicegroup_name		svcgrp_versioncheck
+	alias					Versions Check AM5 / JM4
+	notes					Versions abgleich
+}
+
+define service{
+	name					svc_am5_version_check
+	display_name			AM5 Versions Check
+	check_command			nrpe_alias_check_version_am5
+	use						generic-service-nscp-versionchk
+	servicegroups			svcgrp_versioncheck
+	service_description		Versions abgleich für AM5
+	normal_check_interval	1
+	notifications_enabled	1
+	contact_groups			ServiceDesk,nagiostestgroup
+	hostgroup_name			hstgrp_test_versionchk_am5
+	#hostgroup_name			Jobmanager-Speicher-Monitoring
+	#host_name
+}
+
+define service{
+	name					svc_jm4_version_check
+	display_name			JM4 Versions Check
+	check_command			nrpe_alias_check_version_jm4
+	use						generic-service-nscp-versionchk
+	servicegroups			svcgrp_versioncheck
+	service_description		Versions abgleich für JM4
+	normal_check_interval	1
+	notifications_enabled	1
+	contact_groups			ServiceDesk,nagiostestgroup
+	hostgroup_name			hstgrp_test_versionchk_jm4
+	#hostgroup_name			Jobmanager-Speicher-Monitoring
+	#host_name
+}
+
+define command{
+	command_name			nrpe_alias_check_version_jm4
+	command_line			$USER5$/check_nrpe -H $HOSTADDRESS$ -n -c alias_check_applicationVersion -a '-process=JM4'
+}
+
+define command{
+	command_name			nrpe_alias_check_version_am5
+	command_line			$USER5$/check_nrpe -H $HOSTADDRESS$ -n -c alias_check_applicationVersion -a '-process=AM5'
+}
+
+####
 
 Einbinden in NSClient++
 =======================
