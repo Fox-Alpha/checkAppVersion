@@ -30,9 +30,28 @@ Parameter
 
 Einbinden im Nagios
 ==================
-TODO
+
+Aufruf über check_nrpe
+Command: check_nrpe -n -H HH-ws-sd-003 -c alias_check_applicationversion -a '-process=JM4 -version=1.8.0.70 -compare=all'
+
 
 
 Einbinden in NSClient++
 =======================
-TODO
+Aktivieren der externen Scripte: nsclient.ini
+
+[/modules]
+; CheckExternalScripts - Execute external scripts
+CheckExternalScripts = 1
+
+[/settings/external scripts
+; COMMAND ARGUMENT PROCESSING - This option determines whether or not the we will allow clients to specify arguments to commands that are executed.
+allow arguments = true
+
+[/settings/external scripts/alias]
+;	Abgleich der Version eines laufenden Prozesses
+;	z.B. -version=1.8.0.72 -process=JM4 -compare=all
+alias_check_applicationVersion = checkAppVersion $ARG1$
+
+[/settings/external scripts/scripts]
+checkAppVersion = scripts\\checkAppVersion.exe $ARG1$
