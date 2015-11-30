@@ -440,8 +440,8 @@ namespace checkAppVersion
                             return false;
                         }
                     }
-                    else
-                        break;
+//                    else
+//                        break;
                 }
                 return true;
             }
