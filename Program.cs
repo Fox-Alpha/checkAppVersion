@@ -150,7 +150,7 @@ namespace checkAppVersion
                     string strVersion;
                     //string strVerNeed;
                     bool equal = false; ;
-#if Debug
+#if DEBUG
                     int[] iVerPrz;
                     int[] iVerNeed;
 #endif
