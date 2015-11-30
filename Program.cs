@@ -150,8 +150,10 @@ namespace checkAppVersion
                     string strVersion;
                     //string strVerNeed;
                     bool equal = false; ;
-                    int[] iVer;
-
+#if Debug
+                    int[] iVerPrz;
+                    int[] iVerNeed;
+#endif
                     if (!check_ProcessIsRunning(prz, out strVersion))
                     {
                         Console.WriteLine("'Es muss mindestens der Name eines Prozesses angegeben werden oder der angegebene Prozess ist nicht gestartet'");
@@ -172,8 +174,13 @@ namespace checkAppVersion
 	                        }
 	                        else
 	                        {
-//	                            iVer = strVersion2IntArray(strVersion);
+#if DEBUG
+	                        	iVerPrz = strVersion2IntArray(strVersion);
+	                        	iVerNeed = strVersion2IntArray(ver);
+	                            equal = check_VersionNumbers(iVerPrz, iVerNeed);
+#else
 	                            equal = check_VersionNumbers(strVersion2IntArray(strVersion), strVersion2IntArray(ver));
+#endif
 	                        }
 	                        status = equal ? (int)nagiosStatus.Ok : (int)nagiosStatus.Critical;
 	
