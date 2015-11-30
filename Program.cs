@@ -154,7 +154,7 @@ namespace checkAppVersion
 
                     if (!check_ProcessIsRunning(prz, out strVersion))
                     {
-                        Console.WriteLine("Es muss mindestens der Name eines Prozesses angegeben werden oder der angegebene Prozess ist nicht gestartet");
+                        Console.WriteLine("'Es muss mindestens der Name eines Prozesses angegeben werden oder der angegebene Prozess ist nicht gestartet'");
                         printUsage();
 #if DEBUG
                         Console.Write("Press any key to continue . . . ");
@@ -162,25 +162,33 @@ namespace checkAppVersion
 #endif
                         status = (int)nagiosStatus.Unknown;
                     }
-                    else if (!string.IsNullOrWhiteSpace(ver))
+                    else 
                     {
-                        if ((compareType & cmdActionArgsCompareType.TEXT) != 0)
-                        {
-                            equal = check_VersionNumbers(strVersion, ver);
-                        }
-                        else
-                        {
-                            iVer = strVersion2IntArray(ver);
-                            equal = check_VersionNumbers(iVer, strVersion2IntArray(ver));
-                        }
-                        status = equal ? (int)nagiosStatus.Ok : (int)nagiosStatus.Critical;
-
-                        if (equal)
-                            Debug.WriteLine(string.Format("Version ist OK (Erf. {0} ({2}) / App {1})", ver, strVersion, compareType));
-                        else
-                            Debug.WriteLine(string.Format("Version ist NOK (Erf. {0} ({2}) / App {1})", ver, strVersion, compareType));
-
-                        Console.WriteLine(string.Format("{4} Version ist {3}|(Erforderlich {0} ({2}) / Anwendung {1})", ver, strVersion, compareType, equal ? "OK" : "NOK", status));
+                    	if (!string.IsNullOrWhiteSpace(ver))
+	                    {
+	                        if ((compareType & cmdActionArgsCompareType.TEXT) != 0)
+	                        {
+	                            equal = check_VersionNumbers(strVersion, ver);
+	                        }
+	                        else
+	                        {
+	                            iVer = strVersion2IntArray(ver);
+	                            equal = check_VersionNumbers(iVer, strVersion2IntArray(ver));
+	                        }
+	                        status = equal ? (int)nagiosStatus.Ok : (int)nagiosStatus.Critical;
+	
+	                        if (equal)
+	                            Debug.WriteLine(string.Format("Version ist OK (Erf. {0} ({2}) / App {1})", ver, strVersion, compareType));
+	                        else
+	                            Debug.WriteLine(string.Format("Version ist NOK (Erf. {0} ({2}) / App {1})", ver, strVersion, compareType));
+	
+	                        Console.WriteLine(string.Format("Version ist {3}|'(Erforderlich {0} ({2}) / Anwendung {1})'", ver, strVersion, compareType, equal ? "OK" : "NOK", status));
+	                    }
+                    	else
+                    	{
+                    		Console.WriteLine(string.Format("'Version von {1} lautet {0}'", strVersion, prz));
+                    		status = (int)nagiosStatus.Ok;
+                    	}
                     }
 
 #if DEBUG
@@ -341,9 +349,9 @@ namespace checkAppVersion
     		if (appProzess.Length > 0)
             {
     			Debug.WriteLine(appProzess[0].MainModule.FileName, "check_ProcessIsRunning() -> FileName");
-    			Console.WriteLine("{0}", appProzess[0].MainModule.FileName);
+//    			Console.WriteLine("{0}", appProzess[0].MainModule.FileName);
     			Debug.WriteLine(appProzess[0].MainModule.FileVersionInfo.ToString(), "check_ProcessIsRunning() -> FileVersionInfo");
-    			Console.WriteLine("{0}", appProzess[0].MainModule.FileVersionInfo); //, "check_ProcessIsRunning() -> FileVersionInfo");
+//    			Console.WriteLine("{0}", appProzess[0].MainModule.FileVersionInfo); //, "check_ProcessIsRunning() -> FileVersionInfo");
     			
     			fvi = appProzess[0].MainModule.FileVersionInfo;
                 strVersion = string.Format("{0}.{1}.{2}.{3}", fvi.FileMajorPart, fvi.FileMinorPart, fvi.FileBuildPart, fvi.FilePrivatePart);
@@ -484,12 +492,13 @@ namespace checkAppVersion
 			{
 				int end = 0;
 				int start = 0;
+				int pos = 0;
 				
 				//	Ersetzem von Anführungszeichen in der Parameterliste
 				cmdline = Regex.Replace(cmdline, "\"", "");
 
                 //  Start auf ersten Parameter beginnend mit ' -' setzen
-                if (cmdline.IndexOf(" -", start) > 0)
+                if ((pos = cmdline.IndexOf(" -", start)) > -1)
                 {
                     start = cmdline.IndexOf(" -", start);
                     cmdline = cmdline.Substring(start, cmdline.Length - start);
