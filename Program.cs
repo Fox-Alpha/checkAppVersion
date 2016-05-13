@@ -12,6 +12,8 @@ using System.Threading;
 using System.Text.RegularExpressions;
 using System.Collections;
 using System.Collections.Generic;
+using CommandLine;
+using CommandLine.Text;
 
 
 //--------------------- TODO ---------------------
@@ -36,7 +38,29 @@ using System.Collections.Generic;
 //--------------------- TODO ---------------------
 namespace checkAppVersion
 {
-	class Program
+    class Options
+    {
+        [Option('p', "process", Required = true,
+            HelpText = "Name des Prozess beim die Version verglichen werden soll")]
+        public string Prozess{ get; set; }
+
+        [Option('v', "appversion", Required = false,
+            HelpText = "Name des Prozess beim die Version verglichen werden soll")]
+        public string Version
+        { get; set; }
+
+        [Option('c', "compare", Required = false, Separator = ',',
+            HelpText = "Name des Prozess beim die Version verglichen werden soll")]
+        public string Compare
+        { get; set; }
+
+        [Option('e', "equaltypes", Required = false, Separator = ',',
+            HelpText = "Name des Prozess beim die Version verglichen werden soll")]
+        public string EqualTypes
+        { get; set; }
+    }
+
+    class Program
 	{
         #region Eigenschaften
         //	Rückgabewerte für Nagios
@@ -76,7 +100,7 @@ namespace checkAppVersion
             LT,
             NEQ,
             GTE,
-            GTL
+            LTE
         }
 		
 		static cmdActionArgsCompareType _compareType;
@@ -97,6 +121,32 @@ namespace checkAppVersion
 
         #endregion
 
+        public static int Main(string[] args)
+        {
+            var result = CommandLine.Parser.Default.ParseArguments<Options>(args);
+            var exitCode = result
+                    .MapResult(
+                        options => {
+                            if (!string.IsNullOrWhiteSpace(options.Prozess))
+                            {
+                                Console.WriteLine("Prozess: {0}", options.Prozess);
+                                return (int) nagiosStatus.Ok;
+                            }
+                            else
+                                return (int) nagiosStatus.Critical;
+                        },
+                        errors => {
+                            //LogHelper.Log(errors);
+                            Console.WriteLine(errors);
+                            Debug.WriteLine(errors);
+                            return 1;
+                        });
+#if DEBUG
+            Console.ReadKey(true);
+#endif
+            return (int) nagiosStatus.Unknown;
+        }
+
 
         /// <summary>
         /// Main Funktion der Anwendung
@@ -104,7 +154,7 @@ namespace checkAppVersion
         /// <param name="args"></param>
         /// <returns></returns>
         /// Parameter Zum Debuggen: -process=AM5 -version=1.8.0.70 -compare=Major,Build,private 
-        public static int Main(string[] args)
+        public static int MainOld(string[] args)
 		{
 			string prz, ver, cmp = "";
 
