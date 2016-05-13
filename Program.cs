@@ -12,6 +12,8 @@ using System.Threading;
 using System.Text.RegularExpressions;
 using System.Collections;
 using System.Collections.Generic;
+using CommandLine;
+using CommandLine.Text;
 
 
 //--------------------- TODO ---------------------
@@ -36,6 +38,57 @@ using System.Collections.Generic;
 //--------------------- TODO ---------------------
 namespace checkAppVersion
 {
+	
+	class Options 
+	{
+//		[Flags()]
+//		public enum cmdActionArgsCompareType : int
+//		{
+//			NONE = 0,
+//			TEXT = 1,
+//			Major = 2,
+//			Minor = 4,
+//			Build = 8,
+//			Private = 16,
+//			ALL = Major | Minor | Build | Private,
+//		}
+//		
+//		public enum cmdActionArgsEqualType : int
+//        {
+//            NONE = 0,
+//            EQ = 1,		//	Equal
+//            GT,			//	GraterThen
+//            LT,			//	LessThen
+//            NEQ,		//	NotEqual
+//            GTE,		//	GreaterThenOrEqaul
+//            LTE			//	LessThenOrEqual
+//        }
+		
+		[Option('p', "process", Required = true)] //
+		//HelpText = "Der Prozess bei dem die Version geprüft werden soll")]
+		public string Prozess{ get; set; }
+		
+//		[Option('v', "appversion", Required = false,
+//		HelpText = "Die Version auf die geprüft werden soll.")]		
+//		public string Version{ get; set; }
+//
+//		[Option('c', "compare", Required = false,
+//		HelpText = "Option auf was geprüft werden soll [Major|Minor|Build|Private]")]
+//		public cmdActionArgsCompareType compares{ get; set; }
+//		public string Compares{ get; set; }
+//		
+//		[Option('e', "equals", Required = false, 
+//		HelpText = "Wie geprüft werden soll [NONE|EQ|GT|LT|NEQ|GTE|LTE]")]
+//		public cmdActionArgsEqualType equals{ get; set; }
+//		public string EqualsType{ get; set; }
+
+//		[Option]
+//		public bool Verbose { get; set; } // --verbose
+//		
+//		[Option('q')]
+//		public bool Quiet { get; set; }   // -q
+	}
+	
 	class Program
 	{
         #region Eigenschaften
@@ -76,7 +129,7 @@ namespace checkAppVersion
             LT,
             NEQ,
             GTE,
-            GTL
+            LTE
         }
 		
 		static cmdActionArgsCompareType _compareType;
@@ -96,6 +149,87 @@ namespace checkAppVersion
         }
 
         #endregion
+        
+
+        
+        public static int Main(string[] args)
+        {
+        	Console.Title = "Nagios Client - NSClient++ App";
+        	
+			compareType = cmdActionArgsCompareType.NONE;
+            equalType = cmdActionArgsEqualType.NONE;
+
+	        //	Kommandozeilenparameter Auflistung
+	        //	Zwischenspeichern als Dictionary zum leichteren Zugriff
+	        dicCmdArgs = new Dictionary<string, string>();
+	        
+	        dicApplications = new Dictionary<string, string>() 
+	        {
+	        	{"JM4","JobManager 4"}, 
+	        	{"AM5","ApplicationManager"}, 
+	        	{"AMMT","AMMT"}
+	        };
+
+	        try
+	        {
+	        var result = CommandLine.Parser.Default.ParseArguments<Options>(args);
+			var exitCode = result
+				.MapResult(
+					options => {
+						//if (options.Verbose) Console.WriteLine("Options: {0} | {1} | {2} | {3} | ", options.Prozess, options.Version, options.compares, options.equals);
+//						if (options.Verbose) 
+//							Console.WriteLine("Options: {0} | {1}", options.Prozess, options.Version);
+//		                if (!string.IsNullOrWhiteSpace(options.Version))
+//		                {
+//		                    dicCmdArgs.Add("version", options.Version);
+//		                }
+//		                else
+//		                    dicCmdArgs.Add("version", string.Empty);
+//		
+//		                if (!string.IsNullOrWhiteSpace(options.Prozess))
+//		                {
+//		                    dicCmdArgs.Add("process", options.Prozess);
+//		                }
+//		                else
+//		                    dicCmdArgs.Add("process", string.Empty);
+//		
+//		                if (!string.IsNullOrWhiteSpace(options.Compares))
+//		                {
+//		                    dicCmdArgs.Add("compare", options.Compares);
+//		                }
+//		                else
+//		                    dicCmdArgs.Add("compare", string.IsNullOrWhiteSpace(options.Version) ? string.Empty : "TEXT");
+//		
+//		                if (!string.IsNullOrWhiteSpace(options.EqualsType))
+//		                {
+//		                    dicCmdArgs.Add("equals", options.EqualsType);
+//		                }
+//		                else
+//		                    dicCmdArgs.Add("equals", string.IsNullOrWhiteSpace(options.EqualsType) ? string.Empty : "eq");
+
+		                return (int)nagiosStatus.Ok; },
+					errors => {
+						//LogHelper.Log(errors);
+						Debug.WriteLine(errors);
+						Console.WriteLine(errors);
+						return (int)nagiosStatus.Critical; });
+	        }
+	        catch(Exception e)
+	        {
+	        	Debug.WriteLine(e.Message);
+	        }
+	        finally
+	        {
+#if DEBUG
+                    Console.Write("Press any key to continue . . . ");
+                    Console.ReadKey(true);
+#endif
+			
+			//return exitCode;        	
+	        }
+	        return (int)nagiosStatus.Unknown;
+  			
+        }
 
 
         /// <summary>
@@ -104,7 +238,7 @@ namespace checkAppVersion
         /// <param name="args"></param>
         /// <returns></returns>
         /// Parameter Zum Debuggen: -process=AM5 -version=1.8.0.70 -compare=Major,Build,private 
-        public static int Main(string[] args)
+        public static int MainOld(string[] args)
 		{
 			string prz, ver, cmp = "";
 
@@ -114,6 +248,10 @@ namespace checkAppVersion
 			compareType = cmdActionArgsCompareType.NONE;
             equalType = cmdActionArgsEqualType.NONE;
 #if DEBUG
+			foreach (string str in args) {
+				Console.WriteLine("Args" + str);
+			}
+
 			Console.WriteLine(Environment.CommandLine);
 			Debug.WriteLine(Environment.CommandLine);
 #endif
@@ -261,6 +399,9 @@ namespace checkAppVersion
 			string cmdProcess;
 			string cmdCompareType;
             string cmdEquals;
+            
+            Console.WriteLine("Arg Count: " + Environment.GetCommandLineArgs().LongLength);
+            Debug.WriteLine("Arg Count: " + Environment.GetCommandLineArgs().LongLength);
 
             if ((Environment.GetCommandLineArgs().Length > 0) && (!string.IsNullOrWhiteSpace(Environment.CommandLine)))
             {
