@@ -49,7 +49,7 @@ namespace checkAppVersion
         public string Version
         { get; set; }
 
-        [Option('c', "compare", Required = false, Separator = ',',
+        [Option('c', "compare", Required = false, //Separator = ',',
             HelpText = "Name des Prozess beim die Version verglichen werden soll")]
         public string Compare
         { get; set; }
@@ -123,28 +123,162 @@ namespace checkAppVersion
 
         public static int Main(string[] args)
         {
-            var result = CommandLine.Parser.Default.ParseArguments<Options>(args);
+            compareType = cmdActionArgsCompareType.NONE;
+            equalType = cmdActionArgsEqualType.NONE;
+
+            //	Kommandozeilenparameter Auflistung
+            //	Zwischenspeichern als Dictionary zum leichteren Zugriff
+            dicCmdArgs = new Dictionary<string, string>();
+
+            dicApplications = new Dictionary<string, string>()
+            {
+                {"JM4","JobManager 4"},
+                {"AM5","ApplicationManager"},
+                {"AMMT","AMMT"}
+            };
+
+			string prz, ver, cmp = "";
+			string strVersion;
+			//string strVerNeed;
+			bool equal = false;
+			;
+#if DEBUG
+			int [] iVerPrz;
+			int [] iVerNeed;
+#endif
+
+			var result = CommandLine.Parser.Default.ParseArguments<Options>(args);
             var exitCode = result
                     .MapResult(
                         options => {
                             if (!string.IsNullOrWhiteSpace(options.Prozess))
                             {
                                 Console.WriteLine("Prozess: {0}", options.Prozess);
-                                return (int) nagiosStatus.Ok;
+                                dicCmdArgs.Add("process", options.Prozess);
+
                             }
                             else
                                 return (int) nagiosStatus.Critical;
+
+                            if (!string.IsNullOrWhiteSpace(options.Version))
+                            {
+                                dicCmdArgs.Add("Version", options.Version);
+                                Console.WriteLine("Prozess: {0}", options.Version);
+                            }
+                            else
+                                return (int) nagiosStatus.Critical;
+
+                            if (!string.IsNullOrWhiteSpace(options.Compare))
+                            {
+                                dicCmdArgs.Add("Compare", options.Compare);
+                                Console.WriteLine("Compare: {0}", options.Compare);
+                            }
+
+                            if (!string.IsNullOrWhiteSpace(options.EqualTypes))
+                            {
+                                dicCmdArgs.Add("Equals", options.EqualTypes);
+                                Console.WriteLine("Equals: {0}", options.EqualTypes);
+                            }
+
+
+                            return (int) nagiosStatus.Ok;
                         },
                         errors => {
                             //LogHelper.Log(errors);
                             Console.WriteLine(errors);
                             Debug.WriteLine(errors);
-                            return 1;
-                        });
+                            return (int)nagiosStatus.Critical;
+                        }
+					);
+
+			dicCmdArgs.TryGetValue ("process", out prz);
+			if (!string.IsNullOrWhiteSpace (prz))
+			{
+				//  Wenn eine Version angegeben ist, dann Vergleich durchführem
+				dicCmdArgs.TryGetValue ("Version", out ver);
+				if (!string.IsNullOrWhiteSpace (ver))
+				{
+					//  Für den Vergleich muss die Version mit angegeben sein
+					dicCmdArgs.TryGetValue ("Compare", out cmp);
+					if (!string.IsNullOrWhiteSpace (cmp))
+					{
+						foreach (string str in cmp.Split (','))
+						{
+							if (!check_compareParameters (str))
+							{
+								Console.WriteLine ("Der angegebene vergleichs Parameter {0} ist ungültig", str);
+//								printUsage ();
+								return (int) nagiosStatus.Unknown;
+							}
+						}
+					}
+					else
+					{
+						//  Kein compare Parameter angegeben
+					}
+				}
 #if DEBUG
-            Console.ReadKey(true);
+				Console.WriteLine (string.Format ("Main() - Parameter: -version: '{0}' | -process: '{1}' | compare: '{2}' | equals: '{3}'",
+								!string.IsNullOrWhiteSpace (ver) ? ver : "LEER",
+								!string.IsNullOrWhiteSpace (prz) ? prz : "LEER",
+								!string.IsNullOrWhiteSpace (cmp) ? cmp : "LEER",
+								"N/A"));
+				Debug.WriteLine (string.Format ("Main() - Parameter: -version: '{0}' | -process: '{1}' | compare: '{2}' | equals: '{3}'",
+								!string.IsNullOrWhiteSpace (ver) ? ver : "LEER",
+								!string.IsNullOrWhiteSpace (prz) ? prz : "LEER",
+								!string.IsNullOrWhiteSpace (cmp) ? cmp : "LEER",
+								"N/A"));
 #endif
-            return (int) nagiosStatus.Unknown;
+
+				if (!check_ProcessIsRunning (prz, out strVersion))
+				{
+					Console.WriteLine ("'Es muss mindestens der Name eines Prozesses angegeben werden oder der angegebene Prozess ist nicht gestartet'");
+//					printUsage ();
+
+					status = (int) nagiosStatus.Unknown;
+				}
+				else
+				{
+					//Console.WriteLine (string.Format ("Versioninformation zu {0}, Version: {1}", prz, strVersion));
+					if (!string.IsNullOrWhiteSpace (ver))
+					{
+						if ((compareType & cmdActionArgsCompareType.TEXT) != 0)
+						{
+							equal = check_VersionNumbers (strVersion, ver);
+						}
+						else
+						{
+#if DEBUG
+							iVerPrz = strVersion2IntArray (strVersion);
+							iVerNeed = strVersion2IntArray (ver);
+							equal = check_VersionNumbers (iVerPrz, iVerNeed);
+#else
+	                            equal = check_VersionNumbers(strVersion2IntArray(strVersion), strVersion2IntArray(ver));
+#endif
+						}
+						status = equal ? (int) nagiosStatus.Ok : (int) nagiosStatus.Critical;
+
+#if DEBUG
+//						if (equal)
+							Debug.WriteLine (string.Format ("Version ist {3} (Erf. {0} ({2}) / App {1})", ver, strVersion, compareType, equal ? "OK" : "NOK"));
+//						else
+//							Debug.WriteLine (string.Format ("Version ist NOK (Erf. {0} ({2}) / App {1})", ver, strVersion, compareType));
+#endif
+
+						Console.WriteLine (string.Format ("Version ist {3}|'(Erforderlich {0} ({2}) / Anwendung {1})'", ver, strVersion, compareType, equal ? "OK" : "NOK", status));
+					}
+					else
+					{
+						Console.WriteLine (string.Format ("'Version von {1} lautet {0}'", strVersion, prz));
+						status = (int) nagiosStatus.Ok;
+					}
+				}
+#if DEBUG
+				Console.Write ("Press any key to continue . . . ");
+				Console.ReadKey(true);
+#endif
+			}
+			return (int) nagiosStatus.Unknown;
         }
 
 
@@ -230,7 +364,7 @@ namespace checkAppVersion
                     if (!check_ProcessIsRunning(prz, out strVersion))
                     {
                         Console.WriteLine("'Es muss mindestens der Name eines Prozesses angegeben werden oder der angegebene Prozess ist nicht gestartet'");
-                        printUsage();
+//                        printUsage();
 #if DEBUG
                         Console.Write("Press any key to continue . . . ");
                         Console.ReadKey(true);
@@ -433,6 +567,7 @@ namespace checkAppVersion
         /// Vergleichen der Version
         /// </summary>
         /// <param name="strProcess">Name des zu prüfenden Prozess</param>
+		/// <param name="strVersion">Gibt die ermittelte Version des Prozesses zurück. </param>
         /// <returns></returns>
         static bool check_ProcessIsRunning(string strProcess, out string strVersion)
     	{
@@ -647,35 +782,35 @@ namespace checkAppVersion
         {
             Console.WriteLine("Falsche/r oder fehlende/r Parameter angabe\n");
             Console.WriteLine("\nHIER KOMMT NOCH EINE HILFE REIN\n");
-            return;
-            
-            Console.WriteLine(
- "\t-process = 	[Names des Prozesses ohne Dateiendung]\n" +
-			"\t\tDer Name des Prozesses der geprüft werden. Beispielsweise explorer. Hierbei  muss die Endung, also .exe, weggelassen werden. Dies muss mindestens angeben sein.\n" +
-			"\t\tMacht auch sonst keinen sinn.\n");
-
-            Console.WriteLine(
-"\t-version =	[Version die vorhanden sein soll]\n" +
-			"\t\tHiermit wird die Version übergeben die laufen soll. Diese kann beliebig sein z.B. 1.0.10.2\n" +
-			"\t\tDer Aufbau der Version kann beliebig sein muss aber bei mehreren Stellen mit einem '.' (Punkt) getrennt sein.\n" +
-			"\t\tWird die Version nicht mit angegeben, wird keine voraussetzung geprüft und nur die verwendete Version ermittelt und ausgegeben.\n" +
-			"\t\tDies kann bei nicht kritischen Versionsnummern verwendet werden.\n");
-
-            Console.WriteLine(
-"\t-compare =	Diese Option gibt an wie die angegebene Version verglichen werden soll.\n" +
-			
-			"\t\t-TEXT = Dies ist ein einfacher Text Vergleich der Version und sollte verwendet werden, wenn die Version nicht nummerische Werte wie a oder alpha/beta enthält\n" +
-					"TEXT wird auch verwendet, wenn keine Compare Option angegeben ist.\n" +
-			"\t\t-Major,Minor,Build,Private = Diese Angaben beziehen sich auf die am meisten verwendeten vierteiligen Versionsangaben und stellen jeweils die einzelnen Teile\n" +
-					"in dieser Reihenfolge dar. Diese Angaben können beliebig kombiniert werden.\n" +
-					"Will man alle Werte vergleichen kann man statt alle Angaben einzeln anzugeben auch den Wert 'ALL' verwenden.\n" +
-			"\t\t-All =	Dieser Wert kombiniert alle Angaben der gängigen Versionsangabe. Bei mehr als vier teilen kann man hier auch mehr vergleichen.\n" +
-
-			"\t\tWird dieser Parameter angegeben muss auch eine Version übergeben werden. Sonst gibt es ja nichts zum vergleichen.\n");
 #if DEBUG 
             Console.Write("Press any key to continue . . . ");
 			Console.ReadKey(true);
 #endif
+            return;
+            
+//            Console.WriteLine(
+// "\t-process = 	[Names des Prozesses ohne Dateiendung]\n" +
+//			"\t\tDer Name des Prozesses der geprüft werden. Beispielsweise explorer. Hierbei  muss die Endung, also .exe, weggelassen werden. Dies muss mindestens angeben sein.\n" +
+//			"\t\tMacht auch sonst keinen sinn.\n");
+
+//            Console.WriteLine(
+//"\t-version =	[Version die vorhanden sein soll]\n" +
+//			"\t\tHiermit wird die Version übergeben die laufen soll. Diese kann beliebig sein z.B. 1.0.10.2\n" +
+//			"\t\tDer Aufbau der Version kann beliebig sein muss aber bei mehreren Stellen mit einem '.' (Punkt) getrennt sein.\n" +
+//			"\t\tWird die Version nicht mit angegeben, wird keine voraussetzung geprüft und nur die verwendete Version ermittelt und ausgegeben.\n" +
+//			"\t\tDies kann bei nicht kritischen Versionsnummern verwendet werden.\n");
+
+//            Console.WriteLine(
+//"\t-compare =	Diese Option gibt an wie die angegebene Version verglichen werden soll.\n" +
+			
+//			"\t\t-TEXT = Dies ist ein einfacher Text Vergleich der Version und sollte verwendet werden, wenn die Version nicht nummerische Werte wie a oder alpha/beta enthält\n" +
+//					"TEXT wird auch verwendet, wenn keine Compare Option angegeben ist.\n" +
+//			"\t\t-Major,Minor,Build,Private = Diese Angaben beziehen sich auf die am meisten verwendeten vierteiligen Versionsangaben und stellen jeweils die einzelnen Teile\n" +
+//					"in dieser Reihenfolge dar. Diese Angaben können beliebig kombiniert werden.\n" +
+//					"Will man alle Werte vergleichen kann man statt alle Angaben einzeln anzugeben auch den Wert 'ALL' verwenden.\n" +
+//			"\t\t-All =	Dieser Wert kombiniert alle Angaben der gängigen Versionsangabe. Bei mehr als vier teilen kann man hier auch mehr vergleichen.\n" +
+
+//			"\t\tWird dieser Parameter angegeben muss auch eine Version übergeben werden. Sonst gibt es ja nichts zum vergleichen.\n");
       }
 
         #endregion
