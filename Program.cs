@@ -41,30 +41,8 @@ namespace checkAppVersion
 	
 	class Options 
 	{
-//		[Flags()]
-//		public enum cmdActionArgsCompareType : int
-//		{
-//			NONE = 0,
-//			TEXT = 1,
-//			Major = 2,
-//			Minor = 4,
-//			Build = 8,
-//			Private = 16,
-//			ALL = Major | Minor | Build | Private,
-//		}
-//		
-//		public enum cmdActionArgsEqualType : int
-//        {
-//            NONE = 0,
-//            EQ = 1,		//	Equal
-//            GT,			//	GraterThen
-//            LT,			//	LessThen
-//            NEQ,		//	NotEqual
-//            GTE,		//	GreaterThenOrEqaul
-//            LTE			//	LessThenOrEqual
-//        }
-		
-		[Option('p', "process", Required = true,
+
+        [Option('p', "process", Required = true,
 		HelpText = "Der Prozess bei dem die Version geprüft werden soll")]
 		public string Prozess{ get; set; }
 
@@ -72,21 +50,30 @@ namespace checkAppVersion
         HelpText = "Die Version auf die geprüft werden soll.")]
         public string Version { get; set; }
 
+        private string _Compares;
+
         [Option('c', "compare", Required = false,
-        HelpText = "Option auf was geprüft werden soll [Major|Minor|Build|Private]")]
+        HelpText = "Option auf was geprüft werden soll [Text|Major|Minor|Build|Private|All] default=TEXT")]
         //public cmdActionArgsCompareType compares { get; set; }
-        public string Compares { get; set; }
+        public string Compares
+        {
+            get { return _Compares; }
+            set
+            {
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    _Compares = string.Empty;
+                }
+                else
+                    _Compares = value;
+            }
+        }
 
         [Option('e', "equals", Required = false,
-        HelpText = "Wie geprüft werden soll [NONE|EQ|GT|LT|NEQ|GTE|LTE]")]
+        HelpText = "Wie geprüft werden soll [EQ|GT|LT|NEQ|GTE|LTE] default=EQ")]
         //public cmdActionArgsEqualType equals { get; set; }
         public string EqualsType { get; set; }
 
-        //		[Option]
-        //		public bool Verbose { get; set; } // --verbose
-        //		
-        //		[Option('q')]
-        //		public bool Quiet { get; set; }   // -q
     }
 	
 	class Program
@@ -149,97 +136,7 @@ namespace checkAppVersion
         }
 
         #endregion
-        
 
-        
-        public static int Main(string[] args)
-        {
-        	Console.Title = "Nagios Client - NSClient++ App";
-        	
-			compareType = cmdActionArgsCompareType.NONE;
-            equalType = cmdActionArgsEqualType.NONE;
-
-	        //	Kommandozeilenparameter Auflistung
-	        //	Zwischenspeichern als Dictionary zum leichteren Zugriff
-	        dicCmdArgs = new Dictionary<string, string>();
-	        
-	        dicApplications = new Dictionary<string, string>() 
-	        {
-	        	{"JM4","JobManager 4"}, 
-	        	{"AM5","ApplicationManager"}, 
-	        	{"AMMT","AMMT"}
-	        };
-
-	        try
-	        {
-	        var result = CommandLine.Parser.Default.ParseArguments<Options>(args);
-			var exitCode = result
-				.MapResult(
-					options => {
-                        //if (options.Verbose) Console.WriteLine("Options: {0} | {1} | {2} | {3} | ", options.Prozess, options.Version, options.compares, options.equals);
-                        //						if (options.Verbose) 
-                        //							Console.WriteLine("Options: {0} | {1}", options.Prozess, options.Version);
-                        if (!string.IsNullOrWhiteSpace(options.Version))
-                        {
-                            dicCmdArgs.Add("version", options.Version);
-                            Debug.WriteLine(string.Format("{0}", options.Version));
-                            Console.WriteLine(string.Format("Version: {0}", options.Version));
-                        }
-                        else
-                            dicCmdArgs.Add("version", string.Empty);
-
-                        if (!string.IsNullOrWhiteSpace(options.Prozess))
-                        {
-                            dicCmdArgs.Add("process", options.Prozess);
-                            Debug.WriteLine(string.Format("{0}", options.Prozess));
-                            Console.WriteLine(string.Format("Prozess: {0}", options.Prozess));
-                        }
-                        else
-                            dicCmdArgs.Add("process", string.Empty);
-
-                        if (!string.IsNullOrWhiteSpace(options.Compares))
-                        {
-                            dicCmdArgs.Add("compare", options.Compares);
-                            Debug.WriteLine(string.Format("{0}", options.Compares));
-                            Console.WriteLine(string.Format("Compares: {0}", options.Compares));
-                        }
-                        else
-                            dicCmdArgs.Add("compare", string.IsNullOrWhiteSpace(options.Version) ? string.Empty : "TEXT");
-
-                        if (!string.IsNullOrWhiteSpace(options.EqualsType))
-                        {
-                            dicCmdArgs.Add("equals", options.EqualsType);
-                            Debug.WriteLine(string.Format("{0}", options.EqualsType));
-                            Console.WriteLine(string.Format("Equals: {0}", options.EqualsType));
-                        }
-                        else
-                        {
-                            dicCmdArgs.Add("equals", string.IsNullOrWhiteSpace(options.EqualsType) ? string.Empty : "eq");
-                        }
-
-                        return (int)nagiosStatus.Ok; },
-					errors => {
-						//LogHelper.Log(errors);
-						Debug.WriteLine(errors);
-						Console.WriteLine(errors);
-						return (int)nagiosStatus.Critical; });
-	        }
-	        catch(Exception e)
-	        {
-	        	Debug.WriteLine(e.Message);
-	        }
-	        finally
-	        {
-#if DEBUG
-                    Console.Write("Press any key to continue . . . ");
-                    Console.ReadKey(true);
-#endif
-			
-			//return exitCode;        	
-	        }
-	        return (int)nagiosStatus.Unknown;
-  			
-        }
 
 
         /// <summary>
@@ -248,32 +145,66 @@ namespace checkAppVersion
         /// <param name="args"></param>
         /// <returns></returns>
         /// Parameter Zum Debuggen: -process=AM5 -version=1.8.0.70 -compare=Major,Build,private 
-        public static int MainOld(string[] args)
-		{
-			string prz, ver, cmp = "";
+        public static int Main(string[] args)
+        {
+            Console.Title = "Nagios Client - NSClient++ App checkApplicationVersion";
 
-//			Console.WriteLine("Nagios Client - NSClient++ App");
-			Console.Title = "Nagios Client - NSClient++ App";
-			
-			compareType = cmdActionArgsCompareType.NONE;
-            equalType = cmdActionArgsEqualType.NONE;
+            string prz, ver, cmp = "";
+
+            string strVersion;
+            //string strVerNeed;
+            bool equal = false; ;
 #if DEBUG
-			foreach (string str in args) {
-				Console.WriteLine("Args" + str);
-			}
-
-			Console.WriteLine(Environment.CommandLine);
-			Debug.WriteLine(Environment.CommandLine);
+            int[] iVerPrz;
+            int[] iVerNeed;
 #endif
-			if(!check_cmdLineArgs())
-			{
-				//printUsage();
-				Console.WriteLine("Es wurden keine Parameter übergeben. \nEs muss mindestens ein Parameter für den gesuchten Prozess angegeben werden\n\t -process[PROZESSNAME]");
-				return (int)nagiosStatus.Unknown;
-			}
-			else
-				Console.WriteLine("BlaBlubb");
+            compareType = cmdActionArgsCompareType.NONE;
+            equalType = cmdActionArgsEqualType.NONE;
 
+            //	Kommandozeilenparameter Auflistung
+            //	Zwischenspeichern als Dictionary zum leichteren Zugriff
+            dicCmdArgs = new Dictionary<string, string>();
+
+            int exitCode = (int)nagiosStatus.Unknown;
+
+
+            dicApplications = new Dictionary<string, string>()
+            {
+                {"JM4","JobManager 4"},
+                {"AM5","ApplicationManager"},
+                {"AMMT","AMMT"}
+            };
+
+            try
+            {
+                var result = CommandLine.Parser.Default.ParseArguments<Options>(args);
+                if ((
+                    exitCode = result
+                    .MapResult(
+                        options =>
+                        {
+                            if (!check_cmdLineArgs(new string[] { options.Prozess, options.Version, options.Compares, options.EqualsType }))
+                            {
+                                return (int)nagiosStatus.Warning;
+                            }
+                            return (int)nagiosStatus.Ok;
+
+                        },
+                        errors => {
+                            Debug.WriteLine(errors);
+                            Console.WriteLine(errors);
+                            return (int)nagiosStatus.Critical; }
+                        )) == 2)
+                {
+                    return (int)nagiosStatus.Warning;
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine(e.Message);
+                return (int)nagiosStatus.Critical;
+            }
+        
             //  Es muss mindestens ein Prozessname angegeben sein
             if (dicCmdArgs.TryGetValue("process", out prz))
             {
@@ -287,10 +218,9 @@ namespace checkAppVersion
                         {
                             foreach (string str in cmp.Split(','))
                             {
-                                if(!check_compareParameters(str))
+                                if (!check_compareParameters(str))
                                 {
                                     Console.WriteLine("Der angegebene vergleichs Parameter {0} ist ungültig", str);
-                                    printUsage();
                                     return (int)nagiosStatus.Unknown;
                                 }
                             }
@@ -303,172 +233,133 @@ namespace checkAppVersion
                 }
 
 #if DEBUG                
-                Console.WriteLine(string.Format("Main() - Parameter: -version: '{0}' | -process: '{1}' | compare: '{2}' | equals: '{3}'", 
+                Console.WriteLine(string.Format("Main() - Parameter: -process: '{1}' | -version: '{0}' | compare: '{2}' | equals: '{3}'",
                                 !string.IsNullOrWhiteSpace(ver) ? ver : "LEER",
-                                !string.IsNullOrWhiteSpace(prz) ? prz : "LEER", 
-                                !string.IsNullOrWhiteSpace(cmp) ? cmp : "LEER", 
+                                !string.IsNullOrWhiteSpace(prz) ? prz : "LEER",
+                                !string.IsNullOrWhiteSpace(cmp) ? cmp : "LEER",
                                 "N/A"));
-                Debug.WriteLine(string.Format("Main() - Parameter: -version: '{0}' | -process: '{1}' | compare: '{2}' | equals: '{3}'", 
+                Debug.WriteLine(string.Format("Main() - Parameter: -process: '{1}' | -version: '{0}' | compare: '{2}' | equals: '{3}'",
                                 !string.IsNullOrWhiteSpace(ver) ? ver : "LEER",
-                                !string.IsNullOrWhiteSpace(prz) ? prz : "LEER", 
-                                !string.IsNullOrWhiteSpace(cmp) ? cmp : "LEER", 
+                                !string.IsNullOrWhiteSpace(prz) ? prz : "LEER",
+                                !string.IsNullOrWhiteSpace(cmp) ? cmp : "LEER",
                                 "N/A"));
 #endif
-                //  Wenn keine Version vorhanden ist, 
-                //  dann nur ausgabe der Version vom Prozes
-                if (!string.IsNullOrWhiteSpace(prz))
+                if (!check_ProcessIsRunning(prz, out strVersion))
                 {
-                    string strVersion;
-                    //string strVerNeed;
-                    bool equal = false; ;
+                    Console.WriteLine("'Der angegebene Prozess ist nicht gestartet oder der Prozessname ist falsch geschrieben'");
 #if DEBUG
-                    int[] iVerPrz;
-                    int[] iVerNeed;
+//                    Console.Write("Press any key to continue . . . ");
+//                    Console.ReadKey(true);
 #endif
-                    if (!check_ProcessIsRunning(prz, out strVersion))
+                    status = (int)nagiosStatus.Unknown;
+                }
+                else
+                {
+                    if (!string.IsNullOrWhiteSpace(ver))
                     {
-                        Console.WriteLine("'Es muss mindestens der Name eines Prozesses angegeben werden oder der angegebene Prozess ist nicht gestartet'");
-                        printUsage();
+                        if ((compareType & cmdActionArgsCompareType.TEXT) != 0)
+                        {
+                            equal = check_VersionNumbers(strVersion, ver);
+                        }
+                        else
+                        {
 #if DEBUG
-                        Console.Write("Press any key to continue . . . ");
-                        Console.ReadKey(true);
-#endif
-                        status = (int)nagiosStatus.Unknown;
-                    }
-                    else 
-                    {
-                    	if (!string.IsNullOrWhiteSpace(ver))
-	                    {
-	                        if ((compareType & cmdActionArgsCompareType.TEXT) != 0)
-	                        {
-	                            equal = check_VersionNumbers(strVersion, ver);
-	                        }
-	                        else
-	                        {
-#if DEBUG
-	                        	iVerPrz = strVersion2IntArray(strVersion);
-	                        	iVerNeed = strVersion2IntArray(ver);
-	                            equal = check_VersionNumbers(iVerPrz, iVerNeed);
+                            iVerPrz = strVersion2IntArray(strVersion);
+                            iVerNeed = strVersion2IntArray(ver);
+                            equal = check_VersionNumbers(iVerPrz, iVerNeed);
 #else
 	                            equal = check_VersionNumbers(strVersion2IntArray(strVersion), strVersion2IntArray(ver));
 #endif
-	                        }
-	                        status = equal ? (int)nagiosStatus.Ok : (int)nagiosStatus.Critical;
-	
+                        }
+                        status = equal ? (int)nagiosStatus.Ok : (int)nagiosStatus.Critical;
+
 #if DEBUG
-							if (equal)
-	                            Debug.WriteLine(string.Format("Version ist OK (Erf. {0} ({2}) / App {1})", ver, strVersion, compareType));
-	                        else
-	                            Debug.WriteLine(string.Format("Version ist NOK (Erf. {0} ({2}) / App {1})", ver, strVersion, compareType));
+                        Debug.WriteLine(string.Format("Version ist {3} (Erf. {0} ({2}) / App {1})", ver, strVersion, compareType, equal ? "OK" : "NOK"));
+                        Console.WriteLine(string.Format("Version ist {3} (Erf. {0} ({2}) / App {1})", ver, strVersion, compareType, equal ? "OK" : "NOK"));
+
+//                        Console.WriteLine("Press any key to continue . . . ");
+//                        Console.ReadKey(true);
 #endif
 
-	                        Console.WriteLine(string.Format("Version ist {3}|'(Erforderlich {0} ({2}) / Anwendung {1})'", ver, strVersion, compareType, equal ? "OK" : "NOK", status));
-	                    }
-                    	else
-                    	{
-                    		Console.WriteLine(string.Format("'Version von {1} lautet {0}'", strVersion, prz));
-                    		status = (int)nagiosStatus.Ok;
-                    	}
+                        Console.WriteLine(string.Format("Version ist {3}|'(Erforderlich {0} ({2}) / Anwendung {1})'", ver, strVersion, compareType, equal ? "OK" : "NOK", status));
                     }
-
+                    else
+                    {
+                        Console.WriteLine(string.Format("'Version von {1} lautet {0}'", strVersion, prz));
+                        status = (int)nagiosStatus.Ok;
 #if DEBUG
-                    Console.Write("Press any key to continue . . . ");
-                    Console.ReadKey(true);
+//                        Console.WriteLine("Press any key to continue . . . ");
+//                        Console.ReadKey(true);
 #endif
-                    return status;
+                    }
                 }
             }
             else
             {
                 Console.WriteLine("Es muss mindestens der Name eines Prozesses angegeben werden oder der angegebene Prozess ist nicht gestartet");
-                printUsage();
             }
-
-            return (int)nagiosStatus.Ok;
+#if DEBUG
+            Console.WriteLine("Press any key to continue . . . ");
+            Console.ReadKey(true);
+#endif
+            return status;
         }
 
         #region check Funktions
+
         /// <summary>
         /// Prüfen und ermitteln welche Parameter der Anwendung übergeben wurden
         /// Parameter werden in einem Dictionary gespeichert
         /// </summary>
-        static bool check_cmdLineArgs()
+        static bool check_cmdLineArgs(params string[] options)
     	{
-	        //	Kommandozeilenparameter Auflistung
-	        //	Zwischenspeichern als Dictionary zum leichteren Zugriff
-	        dicCmdArgs = new Dictionary<string, string>();
-	        
-	        dicApplications = new Dictionary<string, string>() 
-	        {
-	        	{"JM4","JobManager 4"}, 
-	        	{"AM5","ApplicationManager"}, 
-	        	{"AMMT","AMMT"}
-	        };
-	        
-			string cmdNeedVer;
-			string cmdProcess;
-			string cmdCompareType;
-            string cmdEquals;
-            
+            if (options.Length != 4)
+            {
+                return false;
+            }
+
+            //	Kommandozeilenparameter Auflistung
+            //	Zwischenspeichern als Dictionary zum leichteren Zugriff
+            string cmdProcess = string.IsNullOrWhiteSpace(options[0]) ? string.Empty : options[0];
+            string cmdNeedVer = string.IsNullOrWhiteSpace(options[1]) ? string.Empty : options[1];
+            string cmdCompareType = string.IsNullOrWhiteSpace(options[2]) ? string.Empty : options[2];
+            string cmdEquals = string.IsNullOrWhiteSpace(options[3]) ? string.Empty : options[3];
+#if DEBUG
             Console.WriteLine("Arg Count: " + Environment.GetCommandLineArgs().LongLength);
             Debug.WriteLine("Arg Count: " + Environment.GetCommandLineArgs().LongLength);
-
-            if ((Environment.GetCommandLineArgs().Length > 0) && (!string.IsNullOrWhiteSpace(Environment.CommandLine)))
-            {
-                cmdNeedVer = ParseCmdLineParam("version", Environment.CommandLine);
-                cmdProcess = ParseCmdLineParam("process", Environment.CommandLine);
-                cmdCompareType = ParseCmdLineParam("compare", Environment.CommandLine);
-                cmdEquals = ParseCmdLineParam("equals", Environment.CommandLine);
-#if DEBUG                
-                Console.WriteLine(string.Format("check_cmdLineArgs() - Parameter:{4} -version: {0} | -process: {1} | compare: {2} | equals: {3}", 
-                                !string.IsNullOrWhiteSpace(cmdNeedVer) ? cmdNeedVer : "LEER",
-                                !string.IsNullOrWhiteSpace(cmdProcess) ? cmdProcess : "LEER",
-                                !string.IsNullOrWhiteSpace(cmdCompareType) ? cmdCompareType : "LEER", 
-                                !string.IsNullOrWhiteSpace(cmdEquals) ? cmdEquals : "LEER", 
-                                Environment.CommandLine));
-                Debug.WriteLine(string.Format("check_cmdLineArgs() - Parameter:{4} -version: {0} | -process: {1} | compare: {2} | equals: {3}", 
-                                !string.IsNullOrWhiteSpace(cmdNeedVer) ? cmdNeedVer : "LEER",
-                                !string.IsNullOrWhiteSpace(cmdProcess) ? cmdProcess : "LEER",
-                                !string.IsNullOrWhiteSpace(cmdCompareType) ? cmdCompareType : "LEER", 
-                                !string.IsNullOrWhiteSpace(cmdEquals) ? cmdEquals : "LEER", 
-                                Environment.CommandLine));
 #endif
-                if (!string.IsNullOrWhiteSpace(cmdNeedVer))
-                {
-                    dicCmdArgs.Add("version", cmdNeedVer);
-                }
-                else
-                    dicCmdArgs.Add("version", string.Empty);
-
-                if (!string.IsNullOrWhiteSpace(cmdProcess))
-                {
-                    dicCmdArgs.Add("process", cmdProcess);
-                }
-                else
-                    dicCmdArgs.Add("process", string.Empty);
-
-                if (!string.IsNullOrWhiteSpace(cmdCompareType))
-                {
-                    dicCmdArgs.Add("compare", cmdCompareType);
-                }
-                else
-                    dicCmdArgs.Add("compare", string.IsNullOrWhiteSpace(cmdNeedVer) ? string.Empty : "TEXT");
-
-                if (!string.IsNullOrWhiteSpace(cmdCompareType))
-                {
-                    dicCmdArgs.Add("equals", cmdEquals);
-                }
-                else
-                    dicCmdArgs.Add("equals", string.IsNullOrWhiteSpace(cmdEquals) ? string.Empty : "eq");
-                
-                return true;
+            if (!string.IsNullOrWhiteSpace(cmdProcess))
+            {
+                dicCmdArgs.Add("process", cmdProcess);
             }
             else
+                dicCmdArgs.Add("process", string.Empty);
+
+
+            if (!string.IsNullOrWhiteSpace(cmdNeedVer))
             {
-                // FALSE wenn keine Parameter übergeben wurden
-                return false;
-	        //	####
+                dicCmdArgs.Add("version", cmdNeedVer);
             }
+            else
+                dicCmdArgs.Add("version", string.Empty);
+
+
+            if (!string.IsNullOrWhiteSpace(cmdCompareType))
+            {
+                dicCmdArgs.Add("compare", cmdCompareType);
+            }
+            else
+                dicCmdArgs.Add("compare", string.IsNullOrWhiteSpace(cmdNeedVer) ? string.Empty : "TEXT");
+
+
+            if (!string.IsNullOrWhiteSpace(cmdCompareType))
+            {
+                dicCmdArgs.Add("equals", cmdEquals);
+            }
+            else
+                dicCmdArgs.Add("equals", string.IsNullOrWhiteSpace(cmdEquals) ? string.Empty : "eq");
+                
+            return true;
     	}
     	
     	/// <summary>
@@ -643,9 +534,9 @@ namespace checkAppVersion
     		return false;
     	}
 
-        #endregion
+#endregion
 
-        #region helperFunktions
+#region helperFunktions
         /// <summary>
         /// Wandelt die übergebene Versionsnummer in ein nummerisches Array
         /// </summary>
@@ -674,111 +565,6 @@ namespace checkAppVersion
     	}
 
 
-        /// <summary>
-        /// Auslesen der Parameter aus dem Kommandozeilen Aufruf
-        /// </summary>
-        /// <param name="key"></param>
-        /// <param name="cmdline"></param>
-        /// <returns></returns>
-        static public string ParseCmdLineParam(string key, string cmdline)
-		{
-			string res = "";
-			try
-			{
-				int end = 0;
-				int start = 0;
-				int pos = 0;
-				
-				//	Ersetzem von Anführungszeichen in der Parameterliste
-				cmdline = Regex.Replace(cmdline, "\"", "");
-
-                //  Start auf ersten Parameter beginnend mit ' -' setzen
-                if ((pos = cmdline.IndexOf(" -", start)) > -1)
-                {
-                    start = cmdline.IndexOf(" -", start);
-                    cmdline = cmdline.Substring(start, cmdline.Length - start);
-                }
-                else
-                    return string.Empty;
-
-                //Wenn Key nicht gefunden wurde, dann beenden.
-                if ((start = cmdline.ToLower().IndexOf(key)) <= 0)
-					return string.Empty;
-				
-				if (cmdline.Length == start+key.Length)
-					return cmdline.Substring(start, cmdline.Length-start);
-				
-				//prüfen ob dem Parameter ein Wert mit '=' angehängt ist
-				if (cmdline[start+key.Length] == '=') {
-					//Start hinter das '=' setzten
-					start += key.Length+1;
-				}
-				else				
-					start += key.Length;
-				
-				//Position des nächsten Parameters ermitteln
-				if(cmdline.Length > start)
-					end = cmdline.IndexOf(" -", start);
-
-				int length = 0;
-				
-				if (end > 0)
-				{
-					length = end-start;
-				} 
-				else 
-				{
-					length = cmdline.Length-start;
-				}
-				if(length > 0)
-					res = cmdline.Substring(start, length);
-				
-			} 
-			catch (System.Exception ex)
-			{
-				Debug.WriteLine(ex.Message);
-			}
-			return res;
-		}
-
-        /// <summary>
-        /// Ausgabe der Nutzungshinweise
-        /// </summary>
-        static void printUsage()
-        {
-            Console.WriteLine("Falsche/r oder fehlende/r Parameter angabe\n");
-            Console.WriteLine("\nHIER KOMMT NOCH EINE HILFE REIN\n");
-            return;
-            
-            Console.WriteLine(
- "\t-process = 	[Names des Prozesses ohne Dateiendung]\n" +
-			"\t\tDer Name des Prozesses der geprüft werden. Beispielsweise explorer. Hierbei  muss die Endung, also .exe, weggelassen werden. Dies muss mindestens angeben sein.\n" +
-			"\t\tMacht auch sonst keinen sinn.\n");
-
-            Console.WriteLine(
-"\t-version =	[Version die vorhanden sein soll]\n" +
-			"\t\tHiermit wird die Version übergeben die laufen soll. Diese kann beliebig sein z.B. 1.0.10.2\n" +
-			"\t\tDer Aufbau der Version kann beliebig sein muss aber bei mehreren Stellen mit einem '.' (Punkt) getrennt sein.\n" +
-			"\t\tWird die Version nicht mit angegeben, wird keine voraussetzung geprüft und nur die verwendete Version ermittelt und ausgegeben.\n" +
-			"\t\tDies kann bei nicht kritischen Versionsnummern verwendet werden.\n");
-
-            Console.WriteLine(
-"\t-compare =	Diese Option gibt an wie die angegebene Version verglichen werden soll.\n" +
-			
-			"\t\t-TEXT = Dies ist ein einfacher Text Vergleich der Version und sollte verwendet werden, wenn die Version nicht nummerische Werte wie a oder alpha/beta enthält\n" +
-					"TEXT wird auch verwendet, wenn keine Compare Option angegeben ist.\n" +
-			"\t\t-Major,Minor,Build,Private = Diese Angaben beziehen sich auf die am meisten verwendeten vierteiligen Versionsangaben und stellen jeweils die einzelnen Teile\n" +
-					"in dieser Reihenfolge dar. Diese Angaben können beliebig kombiniert werden.\n" +
-					"Will man alle Werte vergleichen kann man statt alle Angaben einzeln anzugeben auch den Wert 'ALL' verwenden.\n" +
-			"\t\t-All =	Dieser Wert kombiniert alle Angaben der gängigen Versionsangabe. Bei mehr als vier teilen kann man hier auch mehr vergleichen.\n" +
-
-			"\t\tWird dieser Parameter angegeben muss auch eine Version übergeben werden. Sonst gibt es ja nichts zum vergleichen.\n");
-#if DEBUG 
-            Console.Write("Press any key to continue . . . ");
-			Console.ReadKey(true);
-#endif
-      }
-
-        #endregion
+#endregion
     }
 }
