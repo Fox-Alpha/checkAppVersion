@@ -11,6 +11,6 @@
     <VerifyUploadedFiles>false</VerifyUploadedFiles>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
-    <StartArguments>-p vivaldi</StartArguments>
+    <StartArguments>-p devenv -v 1.1.0.0 -c Minor -e GT</StartArguments>
   </PropertyGroup>
 </Project>
