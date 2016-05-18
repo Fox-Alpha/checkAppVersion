@@ -64,30 +64,30 @@ namespace checkAppVersion
 //            LTE			//	LessThenOrEqual
 //        }
 		
-		[Option('p', "process", Required = true)] //
-		//HelpText = "Der Prozess bei dem die Version geprüft werden soll")]
+		[Option('p', "process", Required = true,
+		HelpText = "Der Prozess bei dem die Version geprüft werden soll")]
 		public string Prozess{ get; set; }
-		
-//		[Option('v', "appversion", Required = false,
-//		HelpText = "Die Version auf die geprüft werden soll.")]		
-//		public string Version{ get; set; }
-//
-//		[Option('c', "compare", Required = false,
-//		HelpText = "Option auf was geprüft werden soll [Major|Minor|Build|Private]")]
-//		public cmdActionArgsCompareType compares{ get; set; }
-//		public string Compares{ get; set; }
-//		
-//		[Option('e', "equals", Required = false, 
-//		HelpText = "Wie geprüft werden soll [NONE|EQ|GT|LT|NEQ|GTE|LTE]")]
-//		public cmdActionArgsEqualType equals{ get; set; }
-//		public string EqualsType{ get; set; }
 
-//		[Option]
-//		public bool Verbose { get; set; } // --verbose
-//		
-//		[Option('q')]
-//		public bool Quiet { get; set; }   // -q
-	}
+        [Option('v', "appversion", Required = false,
+        HelpText = "Die Version auf die geprüft werden soll.")]
+        public string Version { get; set; }
+
+        [Option('c', "compare", Required = false,
+        HelpText = "Option auf was geprüft werden soll [Major|Minor|Build|Private]")]
+        //public cmdActionArgsCompareType compares { get; set; }
+        public string Compares { get; set; }
+
+        [Option('e', "equals", Required = false,
+        HelpText = "Wie geprüft werden soll [NONE|EQ|GT|LT|NEQ|GTE|LTE]")]
+        //public cmdActionArgsEqualType equals { get; set; }
+        public string EqualsType { get; set; }
+
+        //		[Option]
+        //		public bool Verbose { get; set; } // --verbose
+        //		
+        //		[Option('q')]
+        //		public bool Quiet { get; set; }   // -q
+    }
 	
 	class Program
 	{
@@ -176,38 +176,48 @@ namespace checkAppVersion
 			var exitCode = result
 				.MapResult(
 					options => {
-						//if (options.Verbose) Console.WriteLine("Options: {0} | {1} | {2} | {3} | ", options.Prozess, options.Version, options.compares, options.equals);
-//						if (options.Verbose) 
-//							Console.WriteLine("Options: {0} | {1}", options.Prozess, options.Version);
-//		                if (!string.IsNullOrWhiteSpace(options.Version))
-//		                {
-//		                    dicCmdArgs.Add("version", options.Version);
-//		                }
-//		                else
-//		                    dicCmdArgs.Add("version", string.Empty);
-//		
-//		                if (!string.IsNullOrWhiteSpace(options.Prozess))
-//		                {
-//		                    dicCmdArgs.Add("process", options.Prozess);
-//		                }
-//		                else
-//		                    dicCmdArgs.Add("process", string.Empty);
-//		
-//		                if (!string.IsNullOrWhiteSpace(options.Compares))
-//		                {
-//		                    dicCmdArgs.Add("compare", options.Compares);
-//		                }
-//		                else
-//		                    dicCmdArgs.Add("compare", string.IsNullOrWhiteSpace(options.Version) ? string.Empty : "TEXT");
-//		
-//		                if (!string.IsNullOrWhiteSpace(options.EqualsType))
-//		                {
-//		                    dicCmdArgs.Add("equals", options.EqualsType);
-//		                }
-//		                else
-//		                    dicCmdArgs.Add("equals", string.IsNullOrWhiteSpace(options.EqualsType) ? string.Empty : "eq");
+                        //if (options.Verbose) Console.WriteLine("Options: {0} | {1} | {2} | {3} | ", options.Prozess, options.Version, options.compares, options.equals);
+                        //						if (options.Verbose) 
+                        //							Console.WriteLine("Options: {0} | {1}", options.Prozess, options.Version);
+                        if (!string.IsNullOrWhiteSpace(options.Version))
+                        {
+                            dicCmdArgs.Add("version", options.Version);
+                            Debug.WriteLine(string.Format("{0}", options.Version));
+                            Console.WriteLine(string.Format("Version: {0}", options.Version));
+                        }
+                        else
+                            dicCmdArgs.Add("version", string.Empty);
 
-		                return (int)nagiosStatus.Ok; },
+                        if (!string.IsNullOrWhiteSpace(options.Prozess))
+                        {
+                            dicCmdArgs.Add("process", options.Prozess);
+                            Debug.WriteLine(string.Format("{0}", options.Prozess));
+                            Console.WriteLine(string.Format("Prozess: {0}", options.Prozess));
+                        }
+                        else
+                            dicCmdArgs.Add("process", string.Empty);
+
+                        if (!string.IsNullOrWhiteSpace(options.Compares))
+                        {
+                            dicCmdArgs.Add("compare", options.Compares);
+                            Debug.WriteLine(string.Format("{0}", options.Compares));
+                            Console.WriteLine(string.Format("Compares: {0}", options.Compares));
+                        }
+                        else
+                            dicCmdArgs.Add("compare", string.IsNullOrWhiteSpace(options.Version) ? string.Empty : "TEXT");
+
+                        if (!string.IsNullOrWhiteSpace(options.EqualsType))
+                        {
+                            dicCmdArgs.Add("equals", options.EqualsType);
+                            Debug.WriteLine(string.Format("{0}", options.EqualsType));
+                            Console.WriteLine(string.Format("Equals: {0}", options.EqualsType));
+                        }
+                        else
+                        {
+                            dicCmdArgs.Add("equals", string.IsNullOrWhiteSpace(options.EqualsType) ? string.Empty : "eq");
+                        }
+
+                        return (int)nagiosStatus.Ok; },
 					errors => {
 						//LogHelper.Log(errors);
 						Debug.WriteLine(errors);
