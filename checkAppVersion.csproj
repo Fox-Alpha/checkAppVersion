@@ -68,12 +68,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
     <Optimize>False</Optimize>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="CommandLine">
       <HintPath>packages\CommandLineParser.2.0.275-beta\lib\net40\CommandLine.dll</HintPath>
-    </Reference>
-    <Reference Include="FluentCommandLineParser">
-      <HintPath>packages\FluentCommandLineParser.1.4.3\lib\net35-Client\FluentCommandLineParser.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
