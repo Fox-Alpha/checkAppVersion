@@ -15,7 +15,6 @@ using System.Collections.Generic;
 using CommandLine;
 using CommandLine.Text;
 
-
 //--------------------- TODO ---------------------
 //
 //  Ausgabe einer Hilfe, wenn falsche oder fehlende 
@@ -38,13 +37,11 @@ using CommandLine.Text;
 //--------------------- TODO ---------------------
 namespace checkAppVersion
 {
-	
-	class Options 
-	{
-
+    class Options
+    {
         [Option('p', "process", Required = true,
-		HelpText = "Der Prozess bei dem die Version geprüft werden soll")]
-		public string Prozess{ get; set; }
+        HelpText = "Der Prozess bei dem die Version geprüft werden soll")]
+        public string Prozess { get; set; }
 
         [Option('v', "appversion", Required = false,
         HelpText = "Die Version auf die geprüft werden soll.")]
@@ -73,40 +70,39 @@ namespace checkAppVersion
         HelpText = "Wie geprüft werden soll [EQ|GT|LT|NEQ|GTE|LTE] default=EQ")]
         //public cmdActionArgsEqualType equals { get; set; }
         public string EqualsType { get; set; }
-
     }
-	
-	class Program
-	{
+
+    class Program
+    {
         #region Eigenschaften
         //	Rückgabewerte für Nagios
         enum nagiosStatus
-		{
-			Ok=0,
-			Warning=1,
-			Critical=2,
-			Unknown=3
-		}
-		
-		static Dictionary<string, string> dicApplications;
-		static Dictionary<string, string> dicCmdArgs;
-		static int status = (int) nagiosStatus.Ok;
-		
+        {
+            Ok = 0,
+            Warning = 1,
+            Critical = 2,
+            Unknown = 3
+        }
+
+        static Dictionary<string, string> dicApplications;
+        static Dictionary<string, string> dicCmdArgs;
+        static int status = (int)nagiosStatus.Ok;
+
         /// <summary>
         /// Optionen für den Vergleich der angegebenen Version und der aus
         /// dem Prozess ermittelten Versions Angabe
         /// </summary>
-		[Flags()]
-		public enum cmdActionArgsCompareType : int
-		{
-			NONE = 0,
-			TEXT = 1,
-			Major = 2,
-			Minor = 4,
-			Build = 8,
-			Private = 16,
-			ALL = Major | Minor | Build | Private,
-		}
+        [Flags()]
+        public enum cmdActionArgsCompareType : int
+        {
+            NONE = 0,
+            TEXT = 1,
+            Major = 2,
+            Minor = 4,
+            Build = 8,
+            Private = 16,
+            ALL = Major | Minor | Build | Private,
+        }
 
         public enum cmdActionArgsEqualType : int
         {
@@ -118,14 +114,14 @@ namespace checkAppVersion
             GTE,
             LTE
         }
-		
-		static cmdActionArgsCompareType _compareType;
-		
-		static public cmdActionArgsCompareType compareType
+
+        static cmdActionArgsCompareType _compareType;
+
+        static public cmdActionArgsCompareType compareType
         {
-			get { return _compareType; }
-			set { _compareType = value; }
-		}
+            get { return _compareType; }
+            set { _compareType = value; }
+        }
 
         static cmdActionArgsEqualType _equalType;
 
@@ -136,8 +132,6 @@ namespace checkAppVersion
         }
 
         #endregion
-
-
 
         /// <summary>
         /// Main Funktion der Anwendung
@@ -167,7 +161,6 @@ namespace checkAppVersion
 
             int exitCode = (int)nagiosStatus.Unknown;
 
-
             dicApplications = new Dictionary<string, string>()
             {
                 {"JM4","JobManager 4"},
@@ -178,6 +171,7 @@ namespace checkAppVersion
             try
             {
                 var result = CommandLine.Parser.Default.ParseArguments<Options>(args);
+
                 if ((
                     exitCode = result
                     .MapResult(
@@ -190,10 +184,12 @@ namespace checkAppVersion
                             return (int)nagiosStatus.Ok;
 
                         },
-                        errors => {
+                        errors =>
+                        {
                             Debug.WriteLine(errors);
                             Console.WriteLine(errors);
-                            return (int)nagiosStatus.Critical; }
+                            return (int)nagiosStatus.Critical;
+                        }
                         )) == 2)
                 {
                     return (int)nagiosStatus.Warning;
@@ -204,7 +200,7 @@ namespace checkAppVersion
                 Debug.WriteLine(e.Message);
                 return (int)nagiosStatus.Critical;
             }
-        
+
             //  Es muss mindestens ein Prozessname angegeben sein
             if (dicCmdArgs.TryGetValue("process", out prz))
             {
@@ -246,7 +242,7 @@ namespace checkAppVersion
 #endif
                 if (!check_ProcessIsRunning(prz, out strVersion))
                 {
-                    Console.WriteLine("'Der angegebene Prozess ist nicht gestartet oder der Prozessname ist falsch geschrieben'");
+                    Console.WriteLine("'Der angegebene Prozess ist nicht gestartet oder der Prozessname ist falsch geschrieben' (" + prz + ")");
 #if DEBUG
 //                    Console.Write("Press any key to continue . . . ");
 //                    Console.ReadKey(true);
@@ -268,7 +264,7 @@ namespace checkAppVersion
                             iVerNeed = strVersion2IntArray(ver);
                             equal = check_VersionNumbers(iVerPrz, iVerNeed);
 #else
-	                            equal = check_VersionNumbers(strVersion2IntArray(strVersion), strVersion2IntArray(ver));
+                            equal = check_VersionNumbers(strVersion2IntArray(strVersion), strVersion2IntArray(ver));
 #endif
                         }
                         status = equal ? (int)nagiosStatus.Ok : (int)nagiosStatus.Critical;
@@ -281,7 +277,7 @@ namespace checkAppVersion
 //                        Console.ReadKey(true);
 #endif
 
-                        Console.WriteLine(string.Format("Version ist {3}|'(Erforderlich {0} ({2}) / Anwendung {1})'", ver, strVersion, compareType, equal ? "OK" : "NOK", status));
+                        Console.WriteLine(string.Format("Version ist {3} (Erf. {0} ({2}) / App {1})|'(Erforderlich {0} ({2}) / Anwendung {1})'", ver, strVersion, compareType, equal ? "OK" : "NOK", status));
                     }
                     else
                     {
@@ -296,7 +292,7 @@ namespace checkAppVersion
             }
             else
             {
-                Console.WriteLine("Es muss mindestens der Name eines Prozesses angegeben werden oder der angegebene Prozess ist nicht gestartet");
+                Console.WriteLine("Es muss mindestens der Name eines Prozesses angegeben werden oder der angegebene Prozess ist nicht gestartet (" + prz + ")");
             }
 #if DEBUG
             Console.WriteLine("Press any key to continue . . . ");
@@ -312,7 +308,7 @@ namespace checkAppVersion
         /// Parameter werden in einem Dictionary gespeichert
         /// </summary>
         static bool check_cmdLineArgs(params string[] options)
-    	{
+        {
             if (options.Length != 4)
             {
                 return false;
@@ -335,14 +331,12 @@ namespace checkAppVersion
             else
                 dicCmdArgs.Add("process", string.Empty);
 
-
             if (!string.IsNullOrWhiteSpace(cmdNeedVer))
             {
                 dicCmdArgs.Add("version", cmdNeedVer);
             }
             else
                 dicCmdArgs.Add("version", string.Empty);
-
 
             if (!string.IsNullOrWhiteSpace(cmdCompareType))
             {
@@ -351,46 +345,45 @@ namespace checkAppVersion
             else
                 dicCmdArgs.Add("compare", string.IsNullOrWhiteSpace(cmdNeedVer) ? string.Empty : "TEXT");
 
-
             if (!string.IsNullOrWhiteSpace(cmdCompareType))
             {
                 dicCmdArgs.Add("equals", cmdEquals);
             }
             else
                 dicCmdArgs.Add("equals", string.IsNullOrWhiteSpace(cmdEquals) ? string.Empty : "eq");
-                
+
             return true;
-    	}
-    	
-    	/// <summary>
+        }
+
+        /// <summary>
         /// Prüfen auf gültige compare Parameter
         /// Vergleich mit enum
         /// </summary>
         /// <param name="value"></param>
-    	static bool check_compareParameters(string value)
-    	{
-        //	Übergebenen Action Parameter prüfen ob dieser im enum enthalten ist
-	        cmdActionArgsCompareType result;	
-	        
-        	foreach (string enumarg in Enum.GetNames(typeof(cmdActionArgsCompareType)))
-	        {
-        		if (!string.IsNullOrWhiteSpace(value) && value.ToLower() == enumarg.ToLower())
+        static bool check_compareParameters(string value)
+        {
+            //	Übergebenen Action Parameter prüfen ob dieser im enum enthalten ist
+            cmdActionArgsCompareType result;
+
+            foreach (string enumarg in Enum.GetNames(typeof(cmdActionArgsCompareType)))
+            {
+                if (!string.IsNullOrWhiteSpace(value) && value.ToLower() == enumarg.ToLower())
                 {
-        			Debug.WriteLine("{0} = {1}",enumarg, value);
-        			Enum.TryParse(enumarg, out result);
-        			if ((compareType & cmdActionArgsCompareType.NONE) != 0)  
+                    Debug.WriteLine("{0} = {1}", enumarg, value);
+                    Enum.TryParse(enumarg, out result);
+                    if ((compareType & cmdActionArgsCompareType.NONE) != 0)
                     {
-        				compareType = result;
-        			}
-        			else
-        				compareType = compareType | result;
-        		} 
-	        }
-        	Debug.WriteLine("Action = {0}", compareType);
+                        compareType = result;
+                    }
+                    else
+                        compareType = compareType | result;
+                }
+            }
+            Debug.WriteLine("Action = {0}", compareType);
 
             return (compareType & cmdActionArgsCompareType.NONE) != 0 ? false : true;
-        //	####
-    	}
+            //	####
+        }
 
         /// <summary>
         /// Prüft den Equals Parameter auf gültigkeit
@@ -427,55 +420,57 @@ namespace checkAppVersion
         /// <param name="strProcess">Name des zu prüfenden Prozess</param>
         /// <returns></returns>
         static bool check_ProcessIsRunning(string strProcess, out string strVersion)
-    	{
-    		Process [] appProzess = Process.GetProcessesByName(strProcess);
-    		FileVersionInfo fvi;
-    		
-    		if (appProzess.Length > 0)
+        {
+            Process[] appProzess = Process.GetProcessesByName(strProcess);
+            FileVersionInfo fvi;
+
+            if (appProzess.Length > 0)
             {
-    			Debug.WriteLine(appProzess[0].MainModule.FileName, "check_ProcessIsRunning() -> FileName");
-//    			Console.WriteLine("{0}", appProzess[0].MainModule.FileName);
-    			Debug.WriteLine(appProzess[0].MainModule.FileVersionInfo.ToString(), "check_ProcessIsRunning() -> FileVersionInfo");
-//    			Console.WriteLine("{0}", appProzess[0].MainModule.FileVersionInfo); //, "check_ProcessIsRunning() -> FileVersionInfo");
-    			
-    			fvi = appProzess[0].MainModule.FileVersionInfo;
+                Debug.WriteLine(appProzess[0].MainModule.FileName, "check_ProcessIsRunning() -> FileName");
+                //    			Console.WriteLine("{0}", appProzess[0].MainModule.FileName);
+                Debug.WriteLine(appProzess[0].MainModule.FileVersionInfo.ToString(), "check_ProcessIsRunning() -> FileVersionInfo");
+                //    			Console.WriteLine("{0}", appProzess[0].MainModule.FileVersionInfo); //, "check_ProcessIsRunning() -> FileVersionInfo");
+
+                fvi = appProzess[0].MainModule.FileVersionInfo;
                 strVersion = string.Format("{0}.{1}.{2}.{3}", fvi.FileMajorPart, fvi.FileMinorPart, fvi.FileBuildPart, fvi.FilePrivatePart);
 
                 return true;
-    		}
-    		strVersion = "Prozess wurde nicht gefunden oder ist nicht gestartet"; //string.Empty;
-    		Console.WriteLine(strVersion);
+            }
+            strVersion = "Prozess wurde nicht gefunden oder ist nicht gestartet (" + strProzess + ")"; //string.Empty;
+            Console.WriteLine(strVersion);
 
-    		return false;
-    	}
-    	
+            return false;
+        }
+
         /// <summary>
         /// Vergleich der Versionsnummer als Text vergleich
         /// </summary>
         /// <param name="strVerNum"></param>
         /// <param name="strVerNeed"></param>
         /// <returns>True, wenn Identisch. Sonst False</returns>
-    	static bool check_VersionNumbers(string strVerNum, string strVerNeed)
-    	{
-    		if (!string.IsNullOrWhiteSpace(strVerNum) && !string.IsNullOrWhiteSpace(strVerNeed)) {
-    			if (strVerNum != strVerNeed) {
-    				return false;
-    			}
-    		}
-    		else 
-    			return false;
-    		
-    		return true;
-    	}
-    	
+        static bool check_VersionNumbers(string strVerNum, string strVerNeed)
+        {
+            if (!string.IsNullOrWhiteSpace(strVerNum) && !string.IsNullOrWhiteSpace(strVerNeed))
+            {
+                if (strVerNum != strVerNeed)
+                {
+                    return false;
+                }
+            }
+            else
+                return false;
+
+            return true;
+        }
+
         /// <summary>
         /// Vergleich der Versionsteile als nummericher Wert
         /// </summary>
         /// <param name="iVerNum">Array für ermittelte Version</param>
         /// <param name="iVerNeed">Array der zu prüfenden Version</param>
         /// <returns>True, wenn Identisch. Sonst False</returns>
-    	static bool check_VersionNumbers(int[] iVerNum, int[] iVerNeed)
-    	{
+        static bool check_VersionNumbers(int[] iVerNum, int[] iVerNeed)
+        {
             if (iVerNeed == null || iVerNum == null)
             {
                 return false;
@@ -526,45 +521,44 @@ namespace checkAppVersion
                             return false;
                         }
                     }
-//                    else
-//                        break;
+                    //                    else
+                    //                        break;
                 }
                 return true;
             }
-    		return false;
-    	}
+            return false;
+        }
 
-#endregion
+        #endregion
 
-#region helperFunktions
+        #region helperFunktions
         /// <summary>
         /// Wandelt die übergebene Versionsnummer in ein nummerisches Array
         /// </summary>
         /// <param name="Version">String mit Versionsnummer </param>
         /// <returns>Nummerisches Array</returns>
         static int[] strVersion2IntArray(string Version)
-    	{
-    		string[] verarr = Version.Split('.');
-    		int[] iver = new int[4];
-    		int iTmp;
-    		
-    		if(verarr.Length > 0)
-    		{
-    			for(int i=0; i<verarr.Length;i++)
-    			{
+        {
+            string[] verarr = Version.Split('.');
+            int[] iver = new int[4];
+            int iTmp;
+
+            if (verarr.Length > 0)
+            {
+                for (int i = 0; i < verarr.Length; i++)
+                {
                     if (int.TryParse(verarr[i], out iTmp))
                         iver.SetValue(iTmp, i);
                     else
                         return null;
-    			}
-    		}
-    		else
-    			return new int[]{1,0,0,0};
-    		
-    		return iver;
-    	}
+                }
+            }
+            else
+                return new int[] { 1, 0, 0, 0 };
 
+            return iver;
+        }
 
-#endregion
+        #endregion
     }
 }
