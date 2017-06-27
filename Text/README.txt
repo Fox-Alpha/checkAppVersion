@@ -6,6 +6,7 @@ Da Ergebnis kann z.B. in der Monitoring Umgebung Nagio verwendet werden um siche
 Der Aufruf kann z.B. über den Nagios Windows Client NSCLient++ erfolgen
 
 Es können folgende Parameter übergeben werden.
+Die Parameter können auch in Kurzform angegeben werden: -p | -v | -c | -e
 
 Parameter
 =========
@@ -19,16 +20,27 @@ Parameter
 			Wird die Version nicht mit angegeben, wird keine voraussetzung geprüft und nur die verwendete Version ermittelt und ausgegeben.
 			Dies kann bei nicht kritischen Versionsnummern verwendet werden.
 
--compare =	Diese Option gibt an wie die angegebene Version verglichen werden soll.
+-compare =	Diese Option gibt an welche Teile der angegebenen Version verglichen werden soll.
 			
 			-TEXT = Dies ist ein einfacher Text Vergleich der Version und sollte verwendet werden, wenn die Version nicht nummerische Werte wie a oder alpha/beta enthält
 					TEXT wird auch verwendet, wenn keine Compare Option angegeben ist.
-			-Major,Minor,Build,Private = Diese Angaben beziehen sich auf die am meisten verwendeten vierteiligen Versionsangaben und stellen jeweils die einzelnen Teile
+			-Major,Minor,Build,Private|ALL = Diese Angaben beziehen sich auf die am meisten verwendeten vierteiligen Versionsangaben und stellen jeweils die einzelnen Teile
 					in dieser Reihenfolge dar. Diese Angaben können beliebig kombiniert werden.
 					Will man alle Werte vergleichen kann man statt alle Angaben einzeln anzugeben auch den Wert 'ALL' verwenden.
 			-All =	Dieser Wert kombiniert alle Angaben der gängigen Versionsangabe. Bei mehr als vier teilen kann man hier auch mehr vergleichen.
 
 					Wird dieser Parameter angegeben muss auch eine Version übergeben werden. Sonst gibt es ja nichts zum vergleichen.
+
+-equals =	Art auf die die einzelnen Teile mit einander verglichen werden.
+				EQ		= Teil muss exakt stimmen
+				GT		= Teil muss größer sein
+				LT		= Teil muss kleiner sein
+				NEQ		= Teil darf nicht exact stimmen
+				GTE		= Teil muss größer oder gleich sein
+				LTE		= Teil muss kleiner oder gleich sein
+
+			Z.Zt. wird nur auf GTE vergleichen. Die anderen Optionen werden ignoriert.
+
 
 Voraussetzungen
 ===============
