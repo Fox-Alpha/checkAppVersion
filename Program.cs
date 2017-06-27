@@ -229,16 +229,13 @@ namespace checkAppVersion
                 }
 
 #if DEBUG                
-                Console.WriteLine(string.Format("Main() - Parameter: -process: '{1}' | -version: '{0}' | compare: '{2}' | equals: '{3}'",
-                                !string.IsNullOrWhiteSpace(ver) ? ver : "LEER",
-                                !string.IsNullOrWhiteSpace(prz) ? prz : "LEER",
-                                !string.IsNullOrWhiteSpace(cmp) ? cmp : "LEER",
-                                "N/A"));
-                Debug.WriteLine(string.Format("Main() - Parameter: -process: '{1}' | -version: '{0}' | compare: '{2}' | equals: '{3}'",
-                                !string.IsNullOrWhiteSpace(ver) ? ver : "LEER",
-                                !string.IsNullOrWhiteSpace(prz) ? prz : "LEER",
-                                !string.IsNullOrWhiteSpace(cmp) ? cmp : "LEER",
-                                "N/A"));
+                string strMessageOut = string.Format ("Main() - Parameter: -process: '{1}' | -version: '{0}' | compare: '{2}' | equals: '{3}'",
+                                !string.IsNullOrWhiteSpace (ver) ? ver : "LEER",
+                                !string.IsNullOrWhiteSpace (prz) ? prz : "LEER",
+                                !string.IsNullOrWhiteSpace (cmp) ? cmp : "LEER",
+                                "N/A");
+                Console.WriteLine(strMessageOut);
+                Debug.WriteLine(strMessageOut);
 #endif
                 if (!check_ProcessIsRunning(prz, out strVersion))
                 {
@@ -436,7 +433,7 @@ namespace checkAppVersion
 
                 return true;
             }
-            strVersion = "Prozess wurde nicht gefunden oder ist nicht gestartet (" + strProzess + ")"; //string.Empty;
+            strVersion = "Prozess wurde nicht gefunden oder ist nicht gestartet (" + strProcess + ")"; //string.Empty;
             Console.WriteLine(strVersion);
 
             return false;
