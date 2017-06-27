@@ -143,7 +143,7 @@ namespace checkAppVersion
         {
             Console.Title = "Nagios Client - NSClient++ App checkApplicationVersion";
 
-            string prz, ver, cmp = "";
+            string prz, ver, cmp = "", equ = "";
 
             string strVersion;
             //string strVerNeed;
@@ -226,6 +226,15 @@ namespace checkAppVersion
                     {
                         //  Kein compare Parameter angegeben
                     }
+
+                    //  Art des Vergleiches bei nummerischen Vergleich
+                    if (dicCmdArgs.TryGetValue ("equals", out equ))
+                    {
+                        if (!string.IsNullOrWhiteSpace (equ))
+                        {
+                            check_equalsParameters (equ);
+                        }
+                    }
                 }
 
 #if DEBUG                
@@ -233,7 +242,7 @@ namespace checkAppVersion
                                 !string.IsNullOrWhiteSpace (ver) ? ver : "LEER",
                                 !string.IsNullOrWhiteSpace (prz) ? prz : "LEER",
                                 !string.IsNullOrWhiteSpace (cmp) ? cmp : "LEER",
-                                "N/A");
+                                !string.IsNullOrWhiteSpace (equ) ? equ : "LEER");
                 Console.WriteLine(strMessageOut);
                 Debug.WriteLine(strMessageOut);
 #endif
@@ -385,11 +394,12 @@ namespace checkAppVersion
         /// <summary>
         /// Prüft den Equals Parameter auf gültigkeit
         /// </summary>
-        static void check_equalsParameters()
+        /// /// <param name="value"></param>
+        static void check_equalsParameters(string value)
         {
             cmdActionArgsEqualType result;
-            string value = "";
-            dicCmdArgs.TryGetValue("equals", out value);
+            //string value = "";
+            //dicCmdArgs.TryGetValue("equals", out value);
 
             foreach (string enumarg in Enum.GetNames(typeof(cmdActionArgsEqualType)))
             {
@@ -397,13 +407,21 @@ namespace checkAppVersion
                 {
                     Debug.WriteLine("{0} = {1}", enumarg, value);
                     Enum.TryParse(enumarg, out result);
-                    if (equalType == cmdActionArgsEqualType.NONE)
+                    //if (equalType == cmdActionArgsEqualType.NONE)
+                    //{
+                    //    equalType = cmdActionArgsEqualType.GTE;
+                    //    break;
+                    //}
+                    //else
                     {
-                        equalType = result;
+                        equalType = equalType; // | result;
+                        break;
                     }
-                    else
-                        equalType = equalType | result;
                 }
+            }
+            if (equalType == cmdActionArgsEqualType.NONE)
+            {
+                equalType = cmdActionArgsEqualType.GTE;
             }
             Debug.WriteLine("Equals = {0}", equalType);
         }
@@ -476,12 +494,14 @@ namespace checkAppVersion
             //  Nur Vergleichen wenn beide Versionen gleiche Anzahl Teile haben
             if (iVerNum.Length >= iVerNeed.Length)
             {
+                // TODO: Woraround - Vergleich immer auf GTE (Greater Then or Equal)
                 //  Alle Teile vergleichen
                 for (int i = 0; i < iVerNeed.Length; i++)
                 {
                     if (((compareType & cmdActionArgsCompareType.Major) != 0) && i == 0)
                     {
-                        if (iVerNeed[i] != iVerNum[i])
+                        //if (iVerNeed[i] != iVerNum[i])
+                        if (iVerNeed [i] > iVerNum [i])
                         {
                             return false;
                         }
@@ -489,7 +509,8 @@ namespace checkAppVersion
                     }
                     if (((compareType & cmdActionArgsCompareType.Minor) != 0) && i == 1)
                     {
-                        if (iVerNeed[i] != iVerNum[i])
+                        //if (iVerNeed[i] != iVerNum[i])
+                        if (iVerNeed[i] > iVerNum[i])
                         {
                             return false;
                         }
@@ -497,7 +518,8 @@ namespace checkAppVersion
                     }
                     if (((compareType & cmdActionArgsCompareType.Build) != 0) && i == 2)
                     {
-                        if (iVerNeed[i] != iVerNum[i])
+                        //if (iVerNeed[i] != iVerNum[i])
+                        if (iVerNeed[i] > iVerNum[i])
                         {
                             return false;
                         }
@@ -505,7 +527,8 @@ namespace checkAppVersion
                     }
                     if (((compareType & cmdActionArgsCompareType.Private) != 0) && i == 3)
                     {
-                        if (iVerNeed[i] != iVerNum[i])
+                        //if (iVerNeed[i] != iVerNum[i])
+                        if (iVerNeed[i] > iVerNum[i])
                         {
                             return false;
                         }
@@ -513,7 +536,8 @@ namespace checkAppVersion
                     }
                     if (i > 3 && (compareType & cmdActionArgsCompareType.ALL) != 0)
                     {
-                        if (iVerNeed[i] != iVerNum[i])
+                        //if (iVerNeed[i] != iVerNum[i])
+                        if (iVerNeed[i] > iVerNum[i])
                         {
                             return false;
                         }
