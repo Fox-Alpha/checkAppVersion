@@ -11,9 +11,9 @@
     <VerifyUploadedFiles>false</VerifyUploadedFiles>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
-    <StartArguments>-p JM4 -v 1.8.0.90 -c Minor,Major,Private -e gte</StartArguments>
+    <StartArguments>-p JM4 -v 1.8.0.87 -c Minor,Major,Private -e gte</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
-    <StartArguments>-process=JM4 -version=1.8.72 -compare=Major,Build -equals=gte</StartArguments>
+    <StartArguments>-process=JM4 -version=1.8.87 -compare=Major,Build -equals=gte</StartArguments>
   </PropertyGroup>
 </Project>
