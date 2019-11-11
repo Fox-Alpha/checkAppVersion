@@ -1,0 +1,27 @@
+version: 1.0.{build}
+configuration:
+- Debug
+- Release
+platform:
+- Any CPU
+- x86
+- x64
+assembly_info:
+  patch: true
+  file: '**\AssemblyInfo.*'
+  assembly_version: '{version}'
+  assembly_file_version: '{version}'
+  assembly_informational_version: '{version}'
+before_build:
+- cmd: >-
+    nuget restore
+
+    mkdir artifacts
+build:
+  project: checkAppVersion.csproj
+  verbosity: normal
+after_build:
+- cmd: 7z a artifacts/CheckAppVersion_%appveyor_build_version%_%configuration%_%platform%.zip %appveyor_build_folder%\bin\%configuration%\*.*
+artifacts:
+- path: artifacts/*.zip
+  name: CheckAppVersion_$(APPVEYOR_BUILD_VERSION)_$(CONFIGURATION)_$(PLATFORM)
